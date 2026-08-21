@@ -20,12 +20,21 @@ Architecture:
 - Consolidated "hub" pages (`js/hubs.js`) group related feature pages into tabs to keep the sidebar
   to 9 top-level items (Dashboard, Partnership, Dormitory, Finance, Setup, Review, Tools, Reports, Settings)
 
-Current Phase: Active development under the task system (TASK-002 completed).
+Current Phase: Active development under the task system (TASK-003 completed).
 
-Overall Status: Healthy. App is functional. Most recent change: removed the notification bell
-icon/dropdown/badge from the header and its supporting JS/CSS (TASK-002).
+Overall Status: Healthy. App is functional. Most recent change: TASK-003 updated `CLAUDE.md` (the
+workflow document only — no application code) so the workflow works correctly whether Claude is
+running with a local Git CLI or inside a browser-based Claude Project without one. Previous change:
+removed the notification bell icon/dropdown/badge from the header and its supporting JS/CSS
+(TASK-002).
 
-Active Task: None — TASK-001 and TASK-002 both COMPLETED. Awaiting next task (see `.claude/tasks.md`).
+Active Task: None — TASK-001, TASK-002, and TASK-003 all COMPLETED. Awaiting next task (see
+`.claude/tasks.md`).
+
+Environment Note: This project may be accessed either via a local Claude Code checkout with Git CLI,
+or via a browser-based Claude Project connected to the GitHub repository without a local `.git`
+directory. `CLAUDE.md`'s "Browser Project / Git Availability" section (added in TASK-003) governs
+how to behave in each case — always verify which applies before assuming Git commands will work.
 
 Completed Areas (pre-existing, functional):
 - Dashboard with 4 tabs (overview, financial, occupancy, partners) + Chart.js charts
@@ -57,14 +66,17 @@ Known Issues:
 
 Blockers: None.
 
-Last Known Good Commit: TASK-002 completion commit — "Remove notification bell from header" (see `git log`)
+Last Known Good Commit: TASK-003 completion commit — "docs(TASK-003): make CLAUDE.md work in
+browser-based Claude Project without local Git CLI" (see `git log`)
 
-Last Checkpoint: TASK-002 completion (this commit)
+Last Checkpoint: TASK-003 completion (this commit)
 
 Validation Status: No automated validation exists for this project (no test suite/build/lint). See
-CLAUDE.md "Validation" section for the manual verification procedure to use instead.
+CLAUDE.md "Validation" section for the manual verification procedure to use instead. TASK-003 itself
+was a documentation-only change validated by manual re-read + `git diff`/`git status` inspection
+(see `.claude/handoff.md`).
 
-Next Action: Await a real feature/bug task from the user; populate TASK-003+ in `.claude/tasks.md`
+Next Action: Await a real feature/bug task from the user; populate TASK-004+ in `.claude/tasks.md`
 when one is defined.
 
-Last Updated: TASK-002 completion (see `git log` for exact date/SHA)
+Last Updated: TASK-003 completion (see `git log` for exact date/SHA)
