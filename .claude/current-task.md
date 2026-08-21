@@ -1,54 +1,52 @@
 # CURRENT TASK
 
 ## Task ID
-TASK-001
+TASK-002
 
 ## Title
-Install persistent, interruption-safe Claude Code workflow
+Remove the notification system and icon from the header
 
 ## Status
 COMPLETED
 
 ## Priority
-High (infrastructure)
+Normal (UI change)
 
 ## Description
-Establish the CLAUDE.md + `.claude/` + `scripts/` workflow scaffold described in the universal
-project setup instructions, so any future Claude session can resume work in this repository without
-relying on prior conversation memory. No application code was modified.
+Remove the bell icon, badge, and dropdown from the top header, and the JS logic that populated it.
 
 ## Completed Work
-- Inspected repository structure, confirmed stack (static HTML/CSS/vanilla JS, no build tooling,
-  no test suite, localStorage-only persistence).
-- Confirmed no pre-existing `CLAUDE.md` or `.claude/` directory (nothing to merge).
-- Created `CLAUDE.md` with verified project facts and full workflow rules.
-- Created `.claude/project-state.md`, `.claude/current-task.md` (this file), `.claude/handoff.md`,
-  `.claude/tasks.md`, `.claude/decisions.md`, `.claude/checkpoints/README.md`, `.claude/README.md`.
-- Created `scripts/checkpoint.sh` and `scripts/checkpoint.ps1`.
+- Removed the bell button/badge/dropdown markup from `renderShell()` in `js/app.js`.
+- Removed the `updateNotifications()` function (populated the bell dropdown from
+  `DataService.getAttentionItems()`).
+- Removed the `updateNotifications()` call site inside `router()`.
+- Removed the now-unused `.notif-badge` CSS rule from `css/style.css`.
+- Verified no other file references `notif-badge`, `notif-dropdown`, or `updateNotifications`.
+- Verified `DataService.getAttentionItems()` is still used and intact — it still powers the
+  separate "يحتاج انتباهك" box on the Dashboard Overview tab (`js/dashboard.js`), which is a
+  distinct feature from the header bell and was explicitly out of scope.
+- Verified the unrelated `bi-bell` icon in `js/vacations.js` (vacation-alerts card heading) was
+  left untouched.
 
 ## Current Work
 None — task complete as of this commit.
 
 ## Remaining Work
-None for this task. Next real task should be defined by the user and logged as TASK-002 in
-`.claude/tasks.md`.
+None for this task.
 
 ## Changed Files
-- `CLAUDE.md` (new)
-- `.claude/project-state.md` (new)
-- `.claude/current-task.md` (new)
-- `.claude/handoff.md` (new)
-- `.claude/tasks.md` (new)
-- `.claude/decisions.md` (new)
-- `.claude/checkpoints/README.md` (new)
-- `.claude/README.md` (new)
-- `scripts/checkpoint.sh` (new)
-- `scripts/checkpoint.ps1` (new)
+- `js/app.js` (modified — removed header bell markup, `updateNotifications()`, its call site)
+- `css/style.css` (modified — removed `.notif-badge` rule)
 
 ## Tests / Validation
-No automated tests exist in this repository. Validation performed: confirmed all created files are
-well-formed Markdown/shell/PowerShell, and that no existing application file (`index.html`, `css/`,
-`js/`) was modified. `git status` / `git diff` reviewed before commit.
+No automated tests exist in this repository. Manual validation performed:
+- `grep`-verified no remaining references to `notif-badge`, `notif-dropdown`, `bi-bell` (header),
+  or `updateNotifications` anywhere in the codebase after the edit.
+- Confirmed `DataService.getAttentionItems()` still has a live caller (`js/dashboard.js`), so it
+  was correctly left in `js/data.js` untouched.
+- Did not run the app in a browser in this session (no browser tooling available here); the change
+  is a straightforward removal of self-contained markup/JS/CSS with no other file depending on the
+  removed identifiers, confirmed via grep across the whole repo.
 
 ## Known Problems
 None.
@@ -57,9 +55,8 @@ None.
 None.
 
 ## Latest Commit
-See `git log --oneline -5` — this task's commit message follows the `docs:` / `feat(TASK-001):` convention.
+See `git log --oneline -5` at handoff time.
 
 ## Exact Next Action
-Await the user's next feature/bug request. When given, create TASK-002 (or BUG-001) in
-`.claude/tasks.md`, set it here as the active task, and follow the standard lifecycle
-(PENDING → IN_PROGRESS → CHECKPOINT → IN_PROGRESS → COMPLETED).
+Await the user's next feature/bug request. When given, create TASK-003 (or BUG-00X) in
+`.claude/tasks.md`, set it here as the active task, and follow the standard lifecycle.

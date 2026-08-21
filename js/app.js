@@ -146,14 +146,6 @@ function renderShell() {
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
-                    <div class="dropdown">
-                        <button class="btn btn-light border position-relative" data-bs-toggle="dropdown" title="التنبيهات">
-                            <i class="bi bi-bell"></i>
-                            <span class="notif-badge d-none" id="notif-badge">0</span>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end p-2" style="min-width:300px;" id="notif-dropdown"></ul>
-                    </div>
-
                     <div class="dropdown d-none d-md-block">
                         <button class="btn btn-light border dropdown-toggle d-flex align-items-center gap-2" data-bs-toggle="dropdown">
                             <span class="activity-avatar" style="width:26px;height:26px;font-size:11px;" id="user-avatar">أ</span>
@@ -305,29 +297,6 @@ function setupGlobalSearch() {
     input.addEventListener('keydown', (e) => { if (e.key === 'Escape') { results.classList.add('d-none'); input.blur(); } });
 }
 
-/* ==========================================================================
-   جرس التنبيهات — يعرض عناصر "يحتاج انتباهك" من أي صفحة
-   ========================================================================== */
-function updateNotifications() {
-    const badge = document.getElementById('notif-badge');
-    const dropdown = document.getElementById('notif-dropdown');
-    if (!badge || !dropdown) return;
-    const items = DataService.getAttentionItems();
-    if (items.length) {
-        badge.textContent = items.length;
-        badge.classList.remove('d-none');
-    } else {
-        badge.classList.add('d-none');
-    }
-    dropdown.innerHTML = items.length ? items.map(i => `
-        <li>
-            <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="${i.link}">
-                <span class="kpi-icon ${i.color}" style="width:28px;height:28px;font-size:13px;flex-shrink:0;"><i class="bi ${i.icon}"></i></span>
-                <span style="font-size:12.5px;white-space:normal;">${i.text}</span>
-            </a>
-        </li>`).join('') : `<li><div class="p-3 text-center text-muted" style="font-size:13px;">لا توجد تنبيهات حالياً</div></li>`;
-}
-
 function updateUserBadge() {
     const user = DataService.getSettings().currentUser || 'أيمن';
     const el = document.getElementById('user-name-label');
@@ -380,7 +349,6 @@ function router() {
     } else {
         container.innerHTML = `<div class="empty-state"><i class="bi bi-tools"></i><div>هذه الصفحة قيد الإنشاء</div></div>`;
     }
-    updateNotifications();
     window.scrollTo(0, 0);
 }
 

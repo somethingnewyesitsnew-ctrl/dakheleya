@@ -1,26 +1,30 @@
 # HANDOFF
 
 ## Session Status
-Complete — workflow scaffold installed, no application code touched.
+Complete — TASK-002 implemented, validated, and committed.
 
 ## Active Task
-TASK-001 — Install persistent Claude Code workflow
+None (TASK-002 completed; no new task queued)
 
 ## Task Status
 COMPLETED
 
 ## Completed
-- Full repository inspection (stack, structure, git history).
-- CLAUDE.md written with verified project facts + workflow rules.
-- `.claude/` state files created: project-state.md, current-task.md, handoff.md (this file),
-  tasks.md, decisions.md, checkpoints/README.md, README.md.
-- `scripts/checkpoint.sh` and `scripts/checkpoint.ps1` created.
+- Removed the notification bell icon, badge, and dropdown from the top header in `js/app.js`
+  (`renderShell()`).
+- Removed the `updateNotifications()` function and its call site in `router()`.
+- Removed the now-unused `.notif-badge` CSS rule from `css/style.css`.
+- Confirmed via repo-wide grep that no other file references the removed identifiers.
+- Confirmed the dashboard's separate "يحتاج انتباهك" box (Overview tab) and its data source
+  `DataService.getAttentionItems()` were left fully intact — different feature, out of scope.
+- Confirmed the unrelated `bi-bell` icon in `js/vacations.js` (vacation alerts card) was untouched.
+- Updated `.claude/tasks.md`, `.claude/current-task.md`, `.claude/project-state.md` for TASK-002.
 
 ## Currently Working On
 Nothing — session complete.
 
 ## Last Completed Step
-Committed and (if a token was supplied) pushed the workflow scaffold to `origin/main`.
+Committed TASK-002 changes to Git on `main`.
 
 ## Current File
 N/A
@@ -29,31 +33,30 @@ N/A
 N/A
 
 ## Remaining
-Nothing for TASK-001. Next session should wait for a real task from the user.
+Nothing for TASK-002. Next session should wait for a new task from the user.
 
 ## Changed Files
-- `CLAUDE.md`
-- `.claude/project-state.md`
-- `.claude/current-task.md`
-- `.claude/handoff.md`
-- `.claude/tasks.md`
-- `.claude/decisions.md`
-- `.claude/checkpoints/README.md`
-- `.claude/README.md`
-- `scripts/checkpoint.sh`
-- `scripts/checkpoint.ps1`
+- `js/app.js` (header bell markup + `updateNotifications()` + its call removed)
+- `css/style.css` (`.notif-badge` rule removed)
+- `.claude/tasks.md`, `.claude/current-task.md`, `.claude/project-state.md`, `.claude/handoff.md`
+  (state updated for TASK-002)
 
 ## Tests / Checks
-No automated test suite exists in this repo. Manual check: verified no `index.html`, `css/*`, or
-`js/*` file was modified by this task; all new files are additive.
+No automated test suite exists in this repo. Manual validation: repo-wide grep confirmed no
+dangling references to `notif-badge`, `notif-dropdown`, or `updateNotifications` after the edit,
+and that `DataService.getAttentionItems()` still has a live caller elsewhere (dashboard). App was
+not run in a live browser during this session (no browser tooling available in this environment) —
+if you notice any header layout issue after this change, it's worth a quick manual look at
+`#/dashboard` in a browser.
 
 ## Failures
 None.
 
 ## Known Issues
-- No `.gitignore` in the repo (not addressed — out of scope for this task).
+- No `.gitignore` in the repo (not addressed — out of scope).
 - Minor leftover-looking defensive code in `js/residents.js` (`openAddResidentModal`'s rent autofill
-  handler) — noted in project-state.md, not fixed (out of scope, not a confirmed bug).
+  handler) — still unresolved, noted previously, not part of this task.
+- Stray empty `New Text Document (2).txt` in repo root — harmless, noted for possible cleanup.
 
 ## Blockers
 None.
@@ -65,17 +68,15 @@ See `git log --oneline -5` in the repository at handoff time.
 When the user requests new work:
 1. Read this file, `project-state.md`, `current-task.md`, `tasks.md`, `decisions.md`.
 2. Run `git status --short` and `git log --oneline -10`.
-3. Create the new task entry in `.claude/tasks.md` (TASK-002, TASK-003, ... or BUG-001, ...).
+3. Create the new task entry in `.claude/tasks.md` (TASK-003, ... or BUG-001, ...).
 4. Set it as the active task in `.claude/current-task.md`.
-5. Implement only what that task requires — do not bundle in unrelated changes.
+5. Implement only what that task requires.
 6. Manually validate per CLAUDE.md's "Validation" section (no automated tests exist).
 7. Update state files, commit, checkpoint/push as appropriate.
 
 ## Important Notes
-- This project has **no build step, no package manager, no test suite**. Do not introduce one
-  without an explicit task/decision.
-- GitHub push requires a token supplied by the user for that session; this environment does not
-  persist credentials between sessions. Never write a token into any tracked file.
+- This project has no build step, no package manager, no test suite.
+- GitHub push requires a token supplied by the user for that session; never persist it anywhere.
 
 ## Updated
-At creation of TASK-001 (workflow installation commit) — see `git log` for exact commit/date.
+At TASK-002 completion commit — see `git log` for exact commit/date.

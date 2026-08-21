@@ -20,12 +20,12 @@ Architecture:
 - Consolidated "hub" pages (`js/hubs.js`) group related feature pages into tabs to keep the sidebar
   to 9 top-level items (Dashboard, Partnership, Dormitory, Finance, Setup, Review, Tools, Reports, Settings)
 
-Current Phase: Workflow bootstrap (this commit) — no feature work started under the new task system yet.
+Current Phase: Active development under the task system (TASK-002 completed).
 
-Overall Status: Healthy. App is functional; most recent change before this workflow setup was adding
-a date display to the header (commit `4fcb868`, "Add current date to header").
+Overall Status: Healthy. App is functional. Most recent change: removed the notification bell
+icon/dropdown/badge from the header and its supporting JS/CSS (TASK-002).
 
-Active Task: TASK-001 (workflow installation — see `.claude/current-task.md`)
+Active Task: None — TASK-001 and TASK-002 both COMPLETED. Awaiting next task (see `.claude/tasks.md`).
 
 Completed Areas (pre-existing, functional):
 - Dashboard with 4 tabs (overview, financial, occupancy, partners) + Chart.js charts
@@ -39,7 +39,9 @@ Completed Areas (pre-existing, functional):
 - Reports: grouped report tiles across all modules with CSV export
 - Settings: partners, rooms/beds config, rent/expense settings, recurring config, factory reset
 - Global search across residents, floors, apartments, rooms, guests, partners, transactions, expenses
-- Notification/attention bell fed by `DataService.getAttentionItems()`
+- Dashboard "يحتاج انتباهك" (attention items) box on the Overview tab, fed by
+  `DataService.getAttentionItems()`. (Note: the separate header notification bell that also used
+  to read from this same data was removed in TASK-002 — the dashboard box is unaffected.)
 
 In Progress: None.
 
@@ -51,17 +53,18 @@ Known Issues:
   `DataService.getRoomLocation ? DataService.getRoom(...) : null` — looks like leftover defensive code;
   not a confirmed bug, just noted for future review.
 - No `.gitignore` present in the repo.
+- Stray empty file `New Text Document (2).txt` in repo root — harmless, noted for possible cleanup.
 
 Blockers: None.
 
-Last Known Good Commit: 4fcb868 — "Add current date to header"
+Last Known Good Commit: TASK-002 completion commit — "Remove notification bell from header" (see `git log`)
 
-Last Checkpoint: Initial workflow installation (this commit)
+Last Checkpoint: TASK-002 completion (this commit)
 
 Validation Status: No automated validation exists for this project (no test suite/build/lint). See
 CLAUDE.md "Validation" section for the manual verification procedure to use instead.
 
-Next Action: Await a real feature/bug task from the user; populate TASK-002+ in `.claude/tasks.md`
-when one is defined. No application code should be modified until a task is defined.
+Next Action: Await a real feature/bug task from the user; populate TASK-003+ in `.claude/tasks.md`
+when one is defined.
 
-Last Updated: Workflow installation commit (see `git log` for exact date/SHA)
+Last Updated: TASK-002 completion (see `git log` for exact date/SHA)
