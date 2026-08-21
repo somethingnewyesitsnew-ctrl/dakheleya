@@ -135,6 +135,11 @@ function renderShell() {
                     </div>
                 </div>
 
+                <div class="header-date d-none d-md-flex align-items-center gap-1" id="header-date-text">
+                    <i class="bi bi-calendar3"></i>
+                    <span></span>
+                </div>
+
                 <div class="global-search-wrap d-none d-lg-block">
                     <input type="text" class="form-control form-control-sm" id="global-search-input" placeholder="ابحث عن طالبة، غرفة، شريك، معاملة...">
                     <div class="global-search-results d-none" id="global-search-results"></div>
@@ -211,6 +216,7 @@ function renderShell() {
 
     setupGlobalSearch();
     updateUserBadge();
+    updateHeaderDate();
 }
 
 /* ==========================================================================
@@ -328,6 +334,14 @@ function updateUserBadge() {
     const avatar = document.getElementById('user-avatar');
     if (el) el.textContent = user;
     if (avatar) avatar.textContent = user.charAt(0);
+}
+
+function updateHeaderDate() {
+    const el = document.getElementById('header-date-text');
+    if (!el) return;
+    const now = new Date();
+    const formatted = now.toLocaleDateString('ar-SD', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    el.querySelector('span').textContent = formatted;
 }
 
 /* ---------------- التوجيه (Router) ---------------- */
