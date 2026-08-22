@@ -469,23 +469,6 @@ body {
     background: #e2f4f3; color: var(--brand-teal);
     display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 14px;
 }
-.notif-badge {
-    position: absolute;
-    top: -4px;
-    inset-inline-end: -4px;
-    background: var(--brand-gold);
-    color: #fff;
-    font-size: 10px;
-    font-weight: 800;
-    min-width: 17px;
-    height: 17px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 3px;
-}
-
 .empty-state {
     text-align: center;
     padding: 50px 20px;

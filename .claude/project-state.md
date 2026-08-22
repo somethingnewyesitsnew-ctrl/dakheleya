@@ -20,14 +20,31 @@ Architecture:
 - Consolidated "hub" pages (`js/hubs.js`) group related feature pages into tabs to keep the sidebar
   to 9 top-level items (Dashboard, Partnership, Dormitory, Finance, Setup, Review, Tools, Reports, Settings)
 
-Current Phase: Workflow bootstrap, now extended with task-planning/decomposition rules and full
-cross-session/cross-account Project Recovery procedure (per DECISION-002). No feature work started
-under the task system yet.
+Current Phase: Active development under the task system. TASK-001, TASK-002, and TASK-003 are all
+COMPLETED (see `.claude/tasks.md`). Workflow now supports both a local Git-CLI environment and a
+browser-based Claude Project without one (TASK-003), plus GitHub-based task planning and
+cross-session/cross-account recovery (TASK-001's DECISION-002 extension).
 
-Overall Status: Healthy. App is functional; most recent change before this workflow setup was adding
-a date display to the header (commit `4fcb868`, "Add current date to header").
+Overall Status: Healthy. App is functional. Recent history:
+- TASK-001: installed the persistent workflow scaffold, later extended per DECISION-002 with
+  task-planning/decomposition rules and a full cross-session/cross-account Project Recovery
+  procedure.
+- TASK-002 (separate session): removed the header notification bell/dropdown/badge and its
+  supporting JS/CSS. The dashboard's own "يحتاج انتباهك" attention-items box, built on the same
+  `DataService.getAttentionItems()` data, is unaffected.
+- TASK-003 (separate session): made `CLAUDE.md` work correctly whether Git CLI is available (local
+  Claude Code) or not (browser-based Claude Project connected via GitHub).
+- A real branch divergence between the TASK-001 extension and TASK-002/TASK-003 was reconciled via
+  a merge commit, combining both sides' additions in `CLAUDE.md` and the `.claude/` state files
+  rather than discarding either.
 
-Active Task: TASK-001 (workflow installation — see `.claude/current-task.md`)
+Active Task: None — TASK-001, TASK-002, and TASK-003 all COMPLETED. Awaiting next task (see
+`.claude/tasks.md`).
+
+Environment Note: This project may be accessed either via a local Claude Code checkout with Git CLI,
+or via a browser-based Claude Project connected to the GitHub repository without a local `.git`
+directory. `CLAUDE.md`'s "Browser Project / Git Availability" section (added in TASK-003) governs
+how to behave in each case — always verify which applies before assuming Git commands will work.
 
 Completed Areas (pre-existing, functional):
 - Dashboard with 4 tabs (overview, financial, occupancy, partners) + Chart.js charts
@@ -41,30 +58,40 @@ Completed Areas (pre-existing, functional):
 - Reports: grouped report tiles across all modules with CSV export
 - Settings: partners, rooms/beds config, rent/expense settings, recurring config, factory reset
 - Global search across residents, floors, apartments, rooms, guests, partners, transactions, expenses
-- Notification/attention bell fed by `DataService.getAttentionItems()`
+- Dashboard "يحتاج انتباهك" (attention items) box on the Overview tab, fed by
+  `DataService.getAttentionItems()`. The separate header notification bell that used to read from
+  the same data was removed in TASK-002 — the dashboard box itself is unaffected.
+- Header date display (added prior to the task system, commit `4fcb868`).
 
 In Progress: None.
 
-Pending Work: See `.claude/tasks.md` for the open task queue (currently empty beyond TASK-001 workflow setup).
+Pending Work: See `.claude/tasks.md` for the open task queue (currently empty beyond TASK-001–003,
+all completed).
 
 Known Issues:
 - No automated tests, no linter, no type-checker exist in this repo (by design — plain static app).
 - `residents.js` `openAddResidentModal`'s rent-autofill handler references
-  `DataService.getRoomLocation ? DataService.getRoom(...) : null` — looks like leftover defensive code;
-  not a confirmed bug, just noted for future review.
+  `DataService.getRoomLocation ? DataService.getRoom(...) : null` — looks like leftover defensive
+  code; not a confirmed bug, just noted for future review.
 - No `.gitignore` present in the repo.
+- Stray empty file `New Text Document (2).txt` in repo root — harmless, noted for possible cleanup.
+- `scripts/checkpoint.sh`/`.ps1` assume Git CLI is present when invoked; correctly scoped as
+  "Git-available only" per `CLAUDE.md`, but don't themselves detect Git's absence gracefully.
 
 Blockers: None.
 
-Last Known Good Commit: 4fcb868 — "Add current date to header" (last application-code commit)
+Last Known Good Commit: Merge commit reconciling TASK-001's extension with TASK-002/TASK-003 — see
+`git log --oneline -10` for the exact SHA.
 
-Last Checkpoint: TASK-001 — workflow scaffold (commit 5e10b47) + task-planning/cross-session
-recovery extension per DECISION-002 (this commit)
+Last Checkpoint: Merge reconciliation of TASK-001 (extended) + TASK-002 + TASK-003 (this commit)
 
 Validation Status: No automated validation exists for this project (no test suite/build/lint). See
-CLAUDE.md "Validation" section for the manual verification procedure to use instead.
+CLAUDE.md "Validation" section for the manual verification procedure used instead. TASK-001/003 were
+documentation-only changes validated by manual re-read + `git diff`/`git status`. TASK-002 was a
+small UI removal validated manually. The merge itself was validated by confirming no conflict
+markers remained in any touched file before committing.
 
-Next Action: Await a real feature/bug task from the user; populate TASK-002+ in `.claude/tasks.md`
-when one is defined. No application code should be modified until a task is defined.
+Next Action: Await a real feature/bug task from the user; populate TASK-004+ in `.claude/tasks.md`
+when one is defined.
 
-Last Updated: Workflow installation commit (see `git log` for exact date/SHA)
+Last Updated: Merge reconciliation commit (see `git log` for exact date/SHA)
