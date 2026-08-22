@@ -78,3 +78,56 @@ only viable place to store this execution state.
   file update, and a commit when Git is available.
 - Any future Claude session (or account) is expected to run the Project Recovery procedure first and
   report using the standardized `PROJECT RECOVERY` block before doing anything else.
+
+---
+
+## DECISION-003 — Add request ledger + session log; formalize state-consistency and cross-account rules
+
+Date: See commit history (TASK-004 commit)
+
+Status: Accepted
+
+### Decision
+Extend the workflow (additively, per an explicit "do not rebuild or replace" instruction) with:
+- `.claude/requests.md` — a request ledger giving every substantial user request a `REQ-xxx` ID,
+  linking it to the tasks it produced and their outcome.
+- `.claude/session-log.md` — one `SESSION-xxx` entry per Claude session that did meaningful work,
+  recording environment, starting checkpoint, work done, files changed, validation, and ending
+  status — explicitly excluding any secrets/credentials.
+- `.claude/sessions/` — a placeholder directory for per-session artifacts too large for the log.
+- `CLAUDE.md` additions: a `State Consistency` field and explicit **STOP-on-contradiction** rule in
+  the recovery report; a `Cross-Account Continuation` section (never assume sole-session status,
+  never force-push, never discard another session's valid work); a `Checkpoint Frequency` section
+  with a worked example showing checkpoints happen per-milestone, not per-request; a `Project Health`
+  check format scoped to what this specific project actually has; an `Authentication / Secrets`
+  section codifying the token-handling discipline already used in practice; and an extended
+  `Final Task Checkpoint Report` with `REQUEST:`, `CURRENT WORK:`, `BLOCKERS:`, and
+  `LAST CHECKPOINT:` fields.
+
+### Why
+This repository has already experienced a real cross-session divergence (SESSION-003's merge of
+TASK-002/TASK-003 into TASK-001's extension) and a real cross-token-lifecycle push workflow (a fresh
+token requested and stripped after every push). Both of those *ad hoc* behaviors are now made
+explicit, repeatable rules rather than something each session has to rediscover. The request ledger
+also closes a real gap: `.claude/tasks.md` tracks tasks, but nothing previously tracked the
+*original user requests* those tasks came from, especially across the boundary of multiple sessions
+worked on by different accounts.
+
+### Alternatives Considered
+- Folding request-tracking directly into `tasks.md` instead of a separate `requests.md`. Rejected:
+  the instructions explicitly asked for a separate file, and keeping requests (the "why") separate
+  from tasks (the "what"/"how") makes both easier to scan independently.
+- Skipping the session log and relying on Git commit messages alone as the session record. Rejected:
+  commit messages describe *what* changed, not environment/validation/ending-status context useful
+  for a completely new session or account trying to understand *how* prior work was carried out —
+  which was the explicit purpose given for this file.
+
+### Consequences
+- Every substantial future request should get a `REQ-xxx` entry before implementation starts, and
+  every session that does meaningful work should get a `SESSION-xxx` entry before or as it ends.
+- Recovery reports now include an explicit consistency check; a future session encountering
+  contradictory state files must stop, resolve using the most recently verified evidence (Git
+  history when available), and report the resolution rather than silently picking a side.
+- Any future divergence with a remote/another session must be merged semantically, never force-pushed
+  or blindly overwritten — this repository has already needed that once and is expected to again as
+  multiple sessions/accounts continue to touch it.

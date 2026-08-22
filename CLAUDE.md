@@ -75,31 +75,28 @@ Before starting any task, in this order:
 
 1. Read `CLAUDE.md` (this file).
 2. Read `.claude/project-state.md`.
-3. Read `.claude/current-task.md`.
-4. Read `.claude/handoff.md`.
-5. Read `.claude/tasks.md`.
-6. Read `.claude/decisions.md` when architectural decisions are relevant.
-7. Check whether Git CLI is available (see "Browser Project / Git Availability" above).
+3. Read `.claude/requests.md`.
+4. Read `.claude/tasks.md`.
+5. Read `.claude/current-task.md`.
+6. Read `.claude/handoff.md`.
+7. Read `.claude/session-log.md`.
+8. Read `.claude/decisions.md` when architectural decisions are relevant.
+9. Check whether Git CLI is available (see "Browser Project / Git Availability" above).
    - If available, run:
      ```bash
      git status --short
      git log --oneline -10
      ```
+     and inspect the remote state when possible (e.g. `git fetch` + compare to `origin/main`) —
+     see "Cross-Account Continuation" below.
    - If unavailable, skip this step and rely on `.claude/*` state files instead. Do not fabricate
      Git output.
-8. Inspect the current task and the relevant existing code.
+10. Inspect the current task and the relevant existing code.
+11. Perform a lightweight Project Health check (see "Project Health" below) before starting
+    substantial new work.
 
-Then briefly report:
-
-```text
-Current Task:
-Status:
-Last Checkpoint:
-Latest Commit: (only if verified via Git; otherwise state "Git CLI unavailable in this environment")
-What is already completed:
-What remains:
-Exact next action:
-```
+Then briefly report using the full Project Recovery format — see "Session Recovery" below, which
+supersedes the short-form report previously used here.
 
 Do not ask the user to explain previous work if the repository or `.claude/*` state files already
 contain enough information.
@@ -119,14 +116,17 @@ If unrelated work is discovered while working on a task:
 
 ### User request history
 
-`.claude/tasks.md` must maintain the relationship between the original user request and the
-implementation tasks it produced, via:
-- **Parent Request** — the user's original request, summarized accurately.
-- **Implementation Plan** — the task/sub-task breakdown.
-- **Execution Status** — current progress against that plan.
+`.claude/requests.md` is the primary request ledger: every substantial user request gets a
+`REQ-xxx` entry there (Request ID, date, summary, objective, status, related task IDs, completed/
+current/remaining tasks, final outcome). `.claude/tasks.md` maintains the task/sub-task breakdown
+itself, each task linked back to its `REQ-xxx` when one exists. Together these preserve the chain:
+
+```text
+USER REQUEST → TASKS → CHECKPOINTS → FINAL RESULT
+```
 
 This prevents a future session from seeing only isolated technical tasks without understanding the
-original objective they serve.
+original objective they serve. See `.claude/requests.md` for the exact record format.
 
 ## Task Lifecycle
 
@@ -297,53 +297,176 @@ Recovery for the next session:
 
 ---
 
-## New Session / New Account Protocol (Project Recovery)
+## Session Recovery (Project Recovery Protocol)
 
 This applies to **any** new Claude session opening this repository, including a different Claude
 account. The FIRST action must be project recovery, before asking the user what to do.
 
 1. Read `CLAUDE.md`.
 2. Read `.claude/project-state.md`.
-3. Read `.claude/current-task.md`.
-4. Read `.claude/handoff.md`.
-5. Read `.claude/tasks.md`.
-6. Read `.claude/decisions.md` when relevant.
-7. If Git CLI is available: inspect current branch, `git status --short`, and
-   `git log --oneline -10`. If Git CLI is unavailable, skip this step, rely on the `.claude/*` files
-   read above, and state plainly that Git information could not be verified — do not fabricate
-   branch names, commit SHAs, or push results.
-8. Determine the latest completed milestone.
-9. Determine the active task.
-10. Determine the exact next action.
+3. Read `.claude/requests.md`.
+4. Read `.claude/tasks.md`.
+5. Read `.claude/current-task.md`.
+6. Read `.claude/handoff.md`.
+7. Read `.claude/session-log.md`.
+8. Read `.claude/decisions.md` when relevant.
+9. Inspect the latest available project state (the files above, plus a quick look at relevant
+   application files if the next task requires it).
+10. If Git CLI is available: inspect current branch, `git status --short`, `git log --oneline -10`,
+    and — when possible — the remote state (e.g. `git fetch` and compare local `main` to
+    `origin/main`; see "Cross-Account Continuation" below). If Git CLI is unavailable, skip this
+    step, rely on the `.claude/*` files read above, and state plainly that Git information could not
+    be verified — do not fabricate branch names, commit SHAs, or push results.
 
 Then report using this structure:
 
 ```text
 PROJECT RECOVERY
 
-Parent Request:
-Current Task:
+Active Request:
+Active Task:
+Current Status:
 Completed:
-Current Progress:
 Last Checkpoint:
+Current Work:
 Remaining:
-Next Action:
-Git Status: (verified branch/commit info, or "UNAVAILABLE IN CURRENT ENVIRONMENT")
+Exact Next Action:
+Git Status: (verified branch/commit/remote info, or "UNAVAILABLE IN CURRENT ENVIRONMENT")
+State Consistency: (CONSISTENT, or a description of the contradiction found — see below)
 ```
 
 **Do not ask the user to explain what happened in the previous session** unless the persisted project
 state is genuinely insufficient to determine the next action.
 
+### If state files contradict each other
+
+**STOP.** Do not guess and do not proceed with implementation. Examples of a contradiction: two
+files name different tasks as "active"; a task is marked COMPLETED in `tasks.md` but `current-task.md`
+describes it as still IN_PROGRESS; the latest Git commit doesn't match what `handoff.md` claims was
+last done. When this happens:
+1. Identify the specific inconsistency explicitly (name the files/fields that disagree).
+2. Resolve it using the most recent verified project information — Git history (when available) is
+   generally the strongest signal, since commits are timestamped and immutable; a state file that
+   wasn't updated to match the latest commit is the more likely error.
+3. Correct the state files to restore consistency before continuing.
+4. Report the inconsistency and its resolution to the user rather than silently fixing it.
+
 ### The "continue" command
 
 If the user says "continue", "continue the project", or "continue from the last checkpoint": run the
-Project Recovery procedure above automatically.
+Session Recovery procedure above automatically.
 - Do not start a new task.
 - Do not restart completed work.
 - Do not redo completed milestones.
 - Continue from the exact documented "Exact Next Action" in `handoff.md`.
 
 If Git is available and uncommitted changes exist, inspect them before modifying anything.
+
+---
+
+## Cross-Account Continuation
+
+Assume another Claude account may have worked on this project immediately before the current
+session. **Never assume this session is the only active session.**
+
+Before modifying anything:
+- Inspect the latest persisted state (`.claude/*`).
+- Inspect recent Git history when available.
+- Detect changes made by another session (new commits, new task entries, updated state files you
+  didn't write).
+- Preserve valid work — never overwrite another session's work blindly.
+
+If remote Git contains commits not present locally (a real divergence, as has already happened once
+in this repository's history — see `.claude/session-log.md` SESSION-003):
+1. Inspect the divergence (`git fetch`, then compare `git log local..origin` and
+   `git log origin..local`, and `git show --stat` on the unfamiliar commits).
+2. Determine what each side changed.
+3. Merge carefully (`git merge`, not a blind overwrite).
+4. Resolve conflicts **semantically** — combine both sides' intent where they're complementary,
+   rather than mechanically picking one side or the other.
+5. Validate the resulting state (re-read merged files for coherence; confirm no leftover conflict
+   markers; confirm application code wasn't accidentally altered if the task didn't call for it).
+6. **Never force-push.**
+7. **Never discard another session's valid work.**
+
+---
+
+## Checkpoint Frequency
+
+Create a checkpoint after every meaningful milestone — do **not** wait until an entire parent
+request (`REQ-xxx`) is fully complete. Example:
+
+```text
+REQ-005
+├── TASK-021 ✓
+├── TASK-022 ✓
+├── TASK-023 IN_PROGRESS
+└── TASK-024 PENDING
+```
+
+After `TASK-022` is completed, persist the state:
+```text
+TASK-021 ✓
+TASK-022 ✓
+TASK-023 IN_PROGRESS
+```
+and create a checkpoint (update state files; commit if Git is available) — before starting
+`TASK-023`, not after `TASK-024` also finishes.
+
+---
+
+## Project Health
+
+At session recovery, and before starting major work, perform a lightweight project health check.
+Check only what is actually available/applicable to this project — do not invent checks it can't
+support (e.g. this project has no package manager or build config, so don't "check" for one beyond
+confirming that fact):
+
+- repository/project accessibility
+- `.claude/` state files present and internally consistent
+- task consistency (`tasks.md` vs `current-task.md` vs `handoff.md`)
+- application structure (`index.html`, `css/`, `js/` present as expected)
+- package/dependency configuration (none exists in this project — confirming that is the check)
+- build configuration (none exists — confirming that is the check)
+- test configuration (none exists — confirming that is the check)
+- obvious broken references (e.g. a route registered in `js/app.js` with no matching `Pages.xxx`
+  function, a script tag in `index.html` for a file that doesn't exist)
+- unfinished migrations, when detectable (none expected in a project this size, but check state
+  files for anything marked IN_PROGRESS with no corresponding recent activity)
+- Git state, if available (clean working tree, in sync with the remote or divergence understood)
+
+Report:
+
+```text
+PROJECT HEALTH
+
+State: HEALTHY / WARNING / BLOCKED
+Issues:
+Recommended action:
+```
+
+Do not start major implementation while the project state is BLOCKED unless explicitly instructed
+by the user.
+
+---
+
+## Authentication / Secrets
+
+GitHub authentication is an environment concern, not something to embed in the project.
+
+Never:
+- request a token unnecessarily (only ask when a push is actually needed and Git is available)
+- write tokens to any file, including `CLAUDE.md` or anything under `.claude/`
+- commit credentials
+- print credentials in a way that persists beyond what's operationally necessary
+- include credentials in task descriptions, the request ledger, or the session log
+
+If Git authentication is already available in the environment, use it normally. If authentication is
+unavailable, continue all work that does not require it and clearly report the limitation — do not
+block unrelated work on it.
+
+**Never claim a push succeeded unless it actually succeeded** — always verify via the command's
+actual output (e.g. a `<old-sha>..<new-sha> branch -> branch` line), never assume.
 
 ---
 
@@ -408,11 +531,11 @@ The commit message must identify the task or sub-task it belongs to.
 
 ### GitHub as persistent project memory
 
-`.claude/project-state.md`, `.claude/current-task.md`, `.claude/handoff.md`, `.claude/tasks.md`, and
-`.claude/decisions.md` are **not temporary notes** — they are persistent project state and part of
-the repository's execution history. When Git is available, meaningful state changes must be committed
-(and pushed when appropriate). When Git is unavailable, update the files anyway and never fabricate a
-Git operation.
+`.claude/project-state.md`, `.claude/requests.md`, `.claude/current-task.md`, `.claude/handoff.md`,
+`.claude/tasks.md`, `.claude/session-log.md`, and `.claude/decisions.md` are **not temporary notes**
+— they are persistent project state and part of the repository's execution history. When Git is
+available, meaningful state changes must be committed (and pushed when appropriate). When Git is
+unavailable, update the files anyway and never fabricate a Git operation.
 
 ### Execution log
 
@@ -484,10 +607,14 @@ At the end of every completed task (or checkpoint), report back to the user in t
 ```text
 TASK CHECKPOINT
 
+REQUEST:
 TASK:
 STATUS:
 
 COMPLETED:
+- ...
+
+CURRENT WORK:
 - ...
 
 FILES CHANGED:
@@ -497,6 +624,12 @@ VALIDATION:
 - ...
 
 KNOWN ISSUES:
+- ...
+
+BLOCKERS:
+- ...
+
+LAST CHECKPOINT:
 - ...
 
 NEXT TASK:
@@ -510,7 +643,13 @@ PERSISTENT STATE:
 - current-task.md updated
 - handoff.md updated
 - tasks.md updated
+- requests.md updated (if this task belongs to a tracked REQ-xxx)
+- session-log.md updated with this session's entry
 ```
+
+`REQUEST:` refers to the `REQ-xxx` ID from `.claude/requests.md` this task belongs to, if any (small
+untracked tasks may omit it). `LAST CHECKPOINT:` should name the most recent checkpoint (task,
+sub-task, or milestone) and its commit if Git is available.
 
 If Git CLI is available and a commit was actually made, also provide the verified commit SHA.
 
@@ -519,3 +658,6 @@ If Git CLI is unavailable, explicitly say:
 > "Git CLI is unavailable in this Claude Project environment."
 
 Do not invent a SHA, and do not imply a commit or push happened when it did not.
+
+This is the same minimum information required by "Session Recovery" and "Session Log" below —
+this report is simply that information surfaced to the user at the moment of checkpoint.

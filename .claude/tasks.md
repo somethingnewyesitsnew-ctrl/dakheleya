@@ -121,9 +121,54 @@ Acceptance Criteria:
 
 ---
 
+## TASK-004
+Parent Request: REQ-001
+Title: Finalize universal cross-session project continuity (request ledger, session log, session
+recovery/health-check formalization)
+Status: COMPLETED
+Priority: High (infrastructure)
+Description: Extend the existing workflow (without rebuilding or replacing it) by adding
+`.claude/requests.md` (request ledger linking USER REQUEST → TASKS → CHECKPOINTS → FINAL RESULT),
+`.claude/session-log.md` (one entry per Claude session that did meaningful work), and
+`.claude/sessions/` (placeholder for larger per-session artifacts). Extend `CLAUDE.md` with: the
+fuller `PROJECT RECOVERY` report format (Active Request / State Consistency fields) and a
+STOP-on-contradiction rule; a "Cross-Account Continuation" section (detect/merge another session's
+work, never force-push, never discard valid work); a "Checkpoint Frequency" section with a worked
+example; a "Project Health" check format (HEALTHY/WARNING/BLOCKED); an "Authentication / Secrets"
+section (never write tokens to any file); and an extended "Final Task Checkpoint Report" format
+matching the new minimum persistent-information fields. No application code modified.
+Acceptance Criteria:
+- `.claude/requests.md`, `.claude/session-log.md`, `.claude/sessions/` all exist and are populated
+  with real (not placeholder-only) content reflecting this repository's actual history.
+- All pre-existing workflow files and instructions preserved — nothing deleted, only extended.
+- No application/business code (`index.html`, `css/`, `js/`) modified.
+- No secrets/tokens written to any tracked file.
+- `CLAUDE.md` documents: request ledger usage, session log usage, the full session-recovery
+  procedure with state-consistency checking, cross-account continuation rules, checkpoint frequency
+  expectations, a project health check format, and authentication/secrets handling.
+- A project health check was performed before starting implementation.
+- Work committed to Git (if available) and pushed only if a token was supplied and the push
+  actually succeeded.
+Completed:
+- All files above created/extended as described.
+- Retroactively recorded REQ-001 (linking TASK-001–004) and SESSION-001 through SESSION-004 in the
+  new ledger/log, since this history existed before the ledger did.
+Validation:
+- Manual: confirmed via `git status --short -- index.html css/ js/` that no application file was
+  touched.
+- Manual: grepped `CLAUDE.md` for leftover conflict markers / structural review of all section
+  headers to confirm no duplication or contradiction was introduced.
+- Manual: re-read `.claude/README.md`, `.claude/requests.md`, `.claude/session-log.md` for internal
+  consistency with `tasks.md` and `current-task.md`.
+Checkpoint: TASK-004 (this entry)
+Next: Await the next user request; assign it a new `REQ-xxx` if substantial.
+
+---
+
 <!--
   Add new tasks below using the same format. Keep them small enough that another Claude session
   could pick one up cold and finish it using only the repository + this file + current-task.md +
   handoff.md. When unrelated work is discovered mid-task, log it here as a new PENDING task instead
-  of implementing it immediately.
+  of implementing it immediately. If the task belongs to a tracked user request, link it via
+  "Parent Request: REQ-0NN" and make sure that REQ's entry in requests.md lists this task ID too.
 -->

@@ -20,33 +20,33 @@ Architecture:
 - Consolidated "hub" pages (`js/hubs.js`) group related feature pages into tabs to keep the sidebar
   to 9 top-level items (Dashboard, Partnership, Dormitory, Finance, Setup, Review, Tools, Reports, Settings)
 
-Current Phase: Active development under the task system. TASK-001, TASK-002, and TASK-003 are all
-COMPLETED (see `.claude/tasks.md`). Workflow now supports both a local Git-CLI environment and a
-browser-based Claude Project without one (TASK-003), plus GitHub-based task planning and
-cross-session/cross-account recovery (TASK-001's DECISION-002 extension).
+Current Phase: Workflow finalized under REQ-001 (TASK-001 through TASK-004 all complete). The
+project continuity system now includes: state files, a request ledger (`requests.md`), a per-session
+log (`session-log.md`), Git-CLI-optional operation, task planning/decomposition, milestone-level
+checkpointing, cross-account divergence handling, and a project-health check. No application
+feature work has started under this system yet — TASK-002 (bell removal) is the only application
+code touched so far, and was a small standalone UI change, not a multi-phase feature.
 
-Overall Status: Healthy. App is functional. Recent history:
-- TASK-001: installed the persistent workflow scaffold, later extended per DECISION-002 with
-  task-planning/decomposition rules and a full cross-session/cross-account Project Recovery
-  procedure.
+Overall Status: Healthy. App is functional. Workflow history:
+- TASK-001 (+ DECISION-002): installed the workflow scaffold, extended with task planning and a
+  first cross-session/cross-account recovery procedure.
 - TASK-002 (separate session): removed the header notification bell/dropdown/badge and its
-  supporting JS/CSS. The dashboard's own "يحتاج انتباهك" attention-items box, built on the same
-  `DataService.getAttentionItems()` data, is unaffected.
-- TASK-003 (separate session): made `CLAUDE.md` work correctly whether Git CLI is available (local
-  Claude Code) or not (browser-based Claude Project connected via GitHub).
+  supporting JS/CSS. The dashboard's own attention-items box is unaffected.
+- TASK-003 (separate session): made `CLAUDE.md` work correctly whether Git CLI is available or not.
 - A real branch divergence between the TASK-001 extension and TASK-002/TASK-003 was reconciled via
-  a merge commit, combining both sides' additions in `CLAUDE.md` and the `.claude/` state files
-  rather than discarding either.
+  a merge commit (`f923a1d`), combining both sides.
+- TASK-004: added the request ledger and session log, and formalized session recovery (with a
+  STOP-on-contradiction rule), cross-account continuation, checkpoint frequency, project health
+  checks, and authentication/secrets handling in `CLAUDE.md`.
 
-Active Task: None — TASK-001, TASK-002, and TASK-003 all COMPLETED. Awaiting next task (see
-`.claude/tasks.md`).
+Active Task: None — TASK-001 through TASK-004 all COMPLETED. Awaiting the next request (see
+`.claude/requests.md` for REQ-001's status and `.claude/tasks.md` for the task queue).
 
 Environment Note: This project may be accessed either via a local Claude Code checkout with Git CLI,
-or via a browser-based Claude Project connected to the GitHub repository without a local `.git`
-directory. `CLAUDE.md`'s "Browser Project / Git Availability" section (added in TASK-003) governs
-how to behave in each case — always verify which applies before assuming Git commands will work.
+or via a browser-based Claude Project connected to GitHub without a local `.git` directory.
+`CLAUDE.md`'s "Browser Project / Git Availability" section governs behavior in each case.
 
-Completed Areas (pre-existing, functional):
+Completed Areas (pre-existing, functional application features):
 - Dashboard with 4 tabs (overview, financial, occupancy, partners) + Chart.js charts
 - Partnership: partners list, capital, advances, distributions, settlements, statements
 - Dormitory: hierarchical structure (floor → apartment → room → bed), residents, housing/collection,
@@ -58,15 +58,14 @@ Completed Areas (pre-existing, functional):
 - Reports: grouped report tiles across all modules with CSV export
 - Settings: partners, rooms/beds config, rent/expense settings, recurring config, factory reset
 - Global search across residents, floors, apartments, rooms, guests, partners, transactions, expenses
-- Dashboard "يحتاج انتباهك" (attention items) box on the Overview tab, fed by
-  `DataService.getAttentionItems()`. The separate header notification bell that used to read from
-  the same data was removed in TASK-002 — the dashboard box itself is unaffected.
-- Header date display (added prior to the task system, commit `4fcb868`).
+- Dashboard "يحتاج انتباهك" (attention items) box on the Overview tab (header notification bell that
+  duplicated this was removed in TASK-002)
+- Header date display
 
 In Progress: None.
 
-Pending Work: See `.claude/tasks.md` for the open task queue (currently empty beyond TASK-001–003,
-all completed).
+Pending Work: See `.claude/tasks.md` for the open task queue (currently empty beyond TASK-001–004,
+all completed) and `.claude/requests.md` for REQ-001's status.
 
 Known Issues:
 - No automated tests, no linter, no type-checker exist in this repo (by design — plain static app).
@@ -80,18 +79,17 @@ Known Issues:
 
 Blockers: None.
 
-Last Known Good Commit: Merge commit reconciling TASK-001's extension with TASK-002/TASK-003 — see
-`git log --oneline -10` for the exact SHA.
+Last Known Good Commit: TASK-004 commit — see `git log --oneline -10` for the exact SHA.
 
-Last Checkpoint: Merge reconciliation of TASK-001 (extended) + TASK-002 + TASK-003 (this commit)
+Last Checkpoint: TASK-004 (this commit)
 
-Validation Status: No automated validation exists for this project (no test suite/build/lint). See
-CLAUDE.md "Validation" section for the manual verification procedure used instead. TASK-001/003 were
-documentation-only changes validated by manual re-read + `git diff`/`git status`. TASK-002 was a
-small UI removal validated manually. The merge itself was validated by confirming no conflict
-markers remained in any touched file before committing.
+Validation Status: No automated validation exists for this project (no test suite/build/lint) — see
+CLAUDE.md "Validation" for the manual procedure used instead. TASK-001/003/004 were documentation/
+workflow-only changes, validated by manual re-read + `git diff`/`git status` inspection and (for
+TASK-004) a self-applied Project Health check before starting. TASK-002 was a small UI removal,
+validated manually.
 
-Next Action: Await a real feature/bug task from the user; populate TASK-004+ in `.claude/tasks.md`
-when one is defined.
+Next Action: Await a real feature/bug request from the user. If substantial, open `REQ-002` in
+`.claude/requests.md` and break it into tasks in `.claude/tasks.md` before implementing.
 
-Last Updated: Merge reconciliation commit (see `git log` for exact date/SHA)
+Last Updated: TASK-004 completion commit (see `git log` for exact date/SHA)
