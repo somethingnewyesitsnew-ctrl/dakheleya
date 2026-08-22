@@ -83,6 +83,17 @@ If unrelated work is discovered while working on a task:
 1. Record it in `.claude/tasks.md`.
 2. Do not implement it unless it is required for the current task.
 
+### User request history
+
+`.claude/tasks.md` must maintain the relationship between the original user request and the
+implementation tasks it produced, via:
+- **Parent Request** — the user's original request, summarized accurately.
+- **Implementation Plan** — the task/sub-task breakdown.
+- **Execution Status** — current progress against that plan.
+
+This prevents a future session from seeing only isolated technical tasks without understanding the
+original objective they serve.
+
 ## Task Lifecycle
 
 ```text
@@ -100,6 +111,72 @@ A task is **COMPLETED** only when:
 Never mark a task COMPLETED merely because code was written.
 
 ---
+
+## User Request → Task Plan (for substantial requests)
+
+Whenever the user gives a **substantial development request**, do not immediately start coding.
+
+First:
+1. Understand the user's request.
+2. Determine the scope.
+3. Inspect the existing implementation.
+4. Break the request into logical implementation phases.
+5. Create a task plan with unique IDs (see "Task Decomposition" below).
+6. Define acceptance criteria for each phase.
+7. Identify dependencies between phases.
+8. Save the plan to `.claude/tasks.md` (including the "Parent Request" summary — see
+   "User Request History" below).
+9. Save the overall plan/state to `.claude/project-state.md`.
+10. Set the first active task in `.claude/current-task.md`.
+11. Update `.claude/handoff.md`.
+
+Then show the user the plan briefly. **Only start implementation after the plan has been persisted
+to these files** — not just described in chat.
+
+Small requests (a single clear bug fix, a one-line change, a well-scoped small feature) do not need
+this full planning ritual — just log them as a single task and proceed. Use judgment: if a request
+would naturally take one sitting and touches one coherent area, one task is enough.
+
+## Task Decomposition
+
+Large requests must be divided into small, independently recoverable milestones using dotted sub-task
+IDs under a parent task, e.g.:
+
+```text
+TASK-010 — Room & Bed Management            (parent)
+TASK-010.1 — Data model
+TASK-010.2 — Floor management
+TASK-010.3 — Room management
+TASK-010.4 — Room types
+TASK-010.5 — Bed management
+TASK-010.6 — Pricing
+TASK-010.7 — UI integration
+TASK-010.8 — Validation
+TASK-010.9 — Final integration
+```
+
+The exact breakdown must depend on the actual project and request — do not invent sub-tasks merely to
+increase the task count. Each sub-task must represent a meaningful implementation milestone with its
+own acceptance criteria (see the record format in `.claude/tasks.md`).
+
+## Task Acceptance Criteria
+
+Every task (and every sub-task) must contain explicit, checkable acceptance criteria, e.g.:
+
+```text
+TASK-010.3 — Room Management
+Acceptance Criteria:
+- User can create a room.
+- User can edit a room.
+- User can delete a room when safe.
+- Room has a unique identifier.
+- Room belongs to a floor.
+- Existing data is not corrupted.
+- Relevant validation succeeds.
+```
+
+Do not mark a task COMPLETED until its acceptance criteria have been verified (per this project's
+manual validation procedure — see "Validation").
 
 ## Checkpoint System
 
@@ -120,6 +197,35 @@ Use `scripts/checkpoint.sh` (or `scripts/checkpoint.ps1` on Windows) to create a
 ```bash
 ./scripts/checkpoint.sh TASK-001 "short checkpoint description"
 ```
+
+### After every meaningful implementation milestone
+
+Do not wait until an entire (possibly multi-part) user request is fully completed before saving
+progress. After each milestone/sub-task:
+1. Validate the work (per this project's manual "Validation" procedure).
+2. Update the task's status.
+3. Update `.claude/current-task.md`.
+4. Update `.claude/project-state.md`.
+5. Update `.claude/handoff.md`.
+6. Update `.claude/tasks.md` (mark the sub-task COMPLETED, note what's next).
+7. Record what was completed, what remains, and the exact next action.
+8. If Git is available: commit the checkpoint, and push when appropriate.
+
+If Git functionality is unavailable in the environment, still update all state files — record
+`Git Status: UNAVAILABLE IN CURRENT ENVIRONMENT` rather than fabricating a commit/push.
+**Never claim a commit or push occurred unless it was actually performed.**
+
+### Protect completed work
+
+Before starting a new milestone:
+1. Verify the previous milestone's work actually exists in the repository (don't just trust its
+   status label).
+2. Do not recreate or rewrite completed functionality unnecessarily.
+3. If a previous milestone is marked COMPLETED but the implementation is missing or broken:
+   - Do not silently mark it complete / do not silently "fix" it without saying so.
+   - Report the inconsistency to the user.
+   - Create a bug task (`BUG-xxx`) if necessary.
+   - Fix it before depending on it for further work.
 
 ---
 
@@ -143,19 +249,52 @@ Recovery for the next session = `git status` + `git log` + `project-state.md` + 
 
 ---
 
-## New Session Protocol
+## New Session / New Account Protocol (Project Recovery)
 
-When a new session starts and the user says "continue" or "continue the project":
+This applies to **any** new Claude session opening this repository, including a different Claude
+account. The FIRST action must be project recovery, before asking the user what to do.
 
-**Do not ask "what were we working on?"**. Instead:
 1. Read `CLAUDE.md`.
 2. Read `.claude/project-state.md`.
 3. Read `.claude/current-task.md`.
 4. Read `.claude/handoff.md`.
 5. Read `.claude/tasks.md`.
-6. Run `git status` and `git log`.
-7. Inspect the latest commit and relevant changed files.
-8. Continue from the "Exact Next Action" in `handoff.md`.
+6. Read `.claude/decisions.md` when relevant.
+7. Inspect the available repository files.
+8. If Git CLI is available:
+   - inspect current branch
+   - inspect `git status --short`
+   - inspect `git log --oneline -10`
+9. Determine the latest completed milestone.
+10. Determine the active task.
+11. Determine the exact next action.
+
+Then report using this structure:
+
+```text
+PROJECT RECOVERY
+
+Parent Request:
+Current Task:
+Completed:
+Current Progress:
+Last Checkpoint:
+Remaining:
+Next Action:
+Git Status:
+```
+
+**Do not ask the user to explain what happened in the previous session** unless the persisted project
+state is genuinely insufficient to determine the next action.
+
+### The "continue" command
+
+If the user says "continue", "continue the project", or "continue from the last checkpoint": run the
+Project Recovery procedure above automatically.
+- Do not start a new task.
+- Do not restart completed work.
+- Do not redo completed milestones.
+- Continue from the exact documented "Exact Next Action".
 
 If uncommitted changes exist, inspect them before modifying anything.
 
@@ -184,7 +323,33 @@ feat(TASK-001): implement user management
 fix(BUG-001): fix authentication redirect
 checkpoint(TASK-001): save project state
 docs: update project state
+checkpoint(TASK-010.2): complete floor management
+checkpoint(TASK-010.3): complete room management
+feat(TASK-010.7): integrate room and bed UI
+fix(TASK-010.8): fix room validation
 ```
+The commit message must identify the task or sub-task it belongs to.
+
+### GitHub as persistent project memory
+
+`.claude/project-state.md`, `.claude/current-task.md`, `.claude/handoff.md`, `.claude/tasks.md`, and
+`.claude/decisions.md` are **not temporary notes** — they are persistent project state and part of
+the repository's execution history. When Git is available, meaningful state changes must be committed
+(and pushed when appropriate). When Git is unavailable, update the files anyway and never fabricate a
+Git operation.
+
+### Execution log
+
+Git history should let another session understand the progression of work. State files must record
+the latest verified commit, e.g.:
+```text
+Last Checkpoint: TASK-010.3
+Commit: abc1234
+Description: Room management completed.
+Next: TASK-010.4 — Room types
+```
+If Git is unavailable, use `Git Status: UNAVAILABLE IN CURRENT ENVIRONMENT` and continue relying on
+the state files alone.
 
 Before committing:
 1. Run relevant validation (see below).

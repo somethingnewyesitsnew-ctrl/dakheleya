@@ -25,6 +25,10 @@ relying on prior conversation memory. No application code was modified.
 - Created `.claude/project-state.md`, `.claude/current-task.md` (this file), `.claude/handoff.md`,
   `.claude/tasks.md`, `.claude/decisions.md`, `.claude/checkpoints/README.md`, `.claude/README.md`.
 - Created `scripts/checkpoint.sh` and `scripts/checkpoint.ps1`.
+- Extended CLAUDE.md and `.claude/tasks.md` per the additional GitHub task-planning &
+  cross-session/cross-account continuation requirement (see DECISION-002): task decomposition rules,
+  acceptance-criteria requirements, milestone-level checkpointing, "protect completed work" rule,
+  full Project Recovery procedure, and "continue" command behavior.
 
 ## Current Work
 None — task complete as of this commit.

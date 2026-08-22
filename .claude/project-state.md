@@ -20,7 +20,9 @@ Architecture:
 - Consolidated "hub" pages (`js/hubs.js`) group related feature pages into tabs to keep the sidebar
   to 9 top-level items (Dashboard, Partnership, Dormitory, Finance, Setup, Review, Tools, Reports, Settings)
 
-Current Phase: Workflow bootstrap (this commit) — no feature work started under the new task system yet.
+Current Phase: Workflow bootstrap, now extended with task-planning/decomposition rules and full
+cross-session/cross-account Project Recovery procedure (per DECISION-002). No feature work started
+under the task system yet.
 
 Overall Status: Healthy. App is functional; most recent change before this workflow setup was adding
 a date display to the header (commit `4fcb868`, "Add current date to header").
@@ -54,9 +56,10 @@ Known Issues:
 
 Blockers: None.
 
-Last Known Good Commit: 4fcb868 — "Add current date to header"
+Last Known Good Commit: 4fcb868 — "Add current date to header" (last application-code commit)
 
-Last Checkpoint: Initial workflow installation (this commit)
+Last Checkpoint: TASK-001 — workflow scaffold (commit 5e10b47) + task-planning/cross-session
+recovery extension per DECISION-002 (this commit)
 
 Validation Status: No automated validation exists for this project (no test suite/build/lint). See
 CLAUDE.md "Validation" section for the manual verification procedure to use instead.

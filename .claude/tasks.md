@@ -1,5 +1,58 @@
 # TASK QUEUE
 
+## Parent Request
+
+No substantial multi-phase feature request has been made yet. The only work performed so far is
+workflow infrastructure (TASK-001) and one small standalone change made before the workflow existed
+(see Git history, commit `4fcb868` "Add current date to header" — not tracked as a task ID since it
+predates this system).
+
+## Implementation Plan
+
+N/A — no active parent request with sub-task decomposition yet. When the user gives a substantial
+request, it will be broken down here into `TASK-0NN.1`, `TASK-0NN.2`, ... sub-tasks per CLAUDE.md's
+"Task Decomposition" section, each with its own acceptance criteria.
+
+## Execution Status
+
+TASK-001 (workflow installation) is COMPLETED. No other tasks are open.
+
+---
+
+## Record format for future tasks/sub-tasks
+
+Use this format for every new entry (parent tasks and dotted sub-tasks alike):
+
+```markdown
+## TASK-0NN[.M] — Title
+
+Parent Request:
+TASK-0NN (if this is a sub-task) — or "—" if this task IS the parent/top-level request
+
+Status:
+PENDING | IN_PROGRESS | COMPLETED | BLOCKED | CANCELLED
+
+Priority:
+HIGH | MEDIUM | LOW
+
+Description:
+
+Acceptance Criteria:
+-
+-
+
+Completed:
+-
+
+Validation:
+
+Checkpoint:
+
+Next:
+```
+
+---
+
 ## TASK-001
 Title: Install persistent, interruption-safe Claude Code workflow
 Status: COMPLETED
