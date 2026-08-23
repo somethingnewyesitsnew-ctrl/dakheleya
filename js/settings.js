@@ -145,12 +145,16 @@ function renderRoomsTabContent(container) {
             <p class="text-muted mb-3" style="font-size:13px;">
                 <i class="bi bi-info-circle text-teal me-1"></i>
                 لتجربة النظام بسرعة: <b>"تعبئة عشوائية"</b> بتولّد لك طوابق وشقق وغرف وأسرة عشوائية،
-                وتسكّن جزءاً منها بطالبات وهميات (بأسماء ومدفوعات وخدمات وضيفات وإجازات عشوائية) —
-                من غير ما تلمس الشركاء أو إعدادات المالية العامة. و<b>"إعادة تهيئة الداخلية"</b>
-                بتمسح كل ده وترجّع الداخلية فاضية تماماً عشان تجرّب من جديد.
+                وتسكّن <b>100% منها</b> (كل الأسرة بدون استثناء) بطالبات وهميات (بأسماء ومدفوعات
+                وخدمات وضيفات عشوائية)، مع <b>مصروفات تشغيلية واقعية</b> (إيجار، مرتبات، كهرباء، مياه...) بنسبة
+                من الإيراد المحصَّل — عشان لوحة التحكم والتقارير والرسوم البيانية (الأرباح،
+                الإشغال، اتجاه الإيرادات والمصروفات...) كلها تشتغل وتوريك وضعاً مالياً منطقياً
+                ومترابطاً، من غير ما تلمس الشركاء أو إعدادات المالية العامة. و<b>"إعادة تهيئة
+                الداخلية"</b> بتمسح كل ده (بما فيها المصروفات التجريبية فقط) وترجّع الداخلية فاضية
+                تماماً عشان تجرّب من جديد.
             </p>
             <div class="d-flex gap-2 flex-wrap">
-                <button class="btn btn-brand btn-sm" id="seed-random-dorm-btn"><i class="bi bi-shuffle me-1"></i>تعبئة عشوائية للتجربة</button>
+                <button class="btn btn-brand btn-sm" id="seed-random-dorm-btn"><i class="bi bi-shuffle me-1"></i>تعبئة عشوائية للتجربة (إشغال 100%)</button>
                 <button class="btn btn-outline-danger btn-sm" id="reset-dorm-only-btn"><i class="bi bi-arrow-counterclockwise me-1"></i>إعادة تهيئة الداخلية من الصفر</button>
             </div>
         </div>
@@ -162,15 +166,15 @@ function renderRoomsTabContent(container) {
     });
 
     document.getElementById('seed-random-dorm-btn').addEventListener('click', () => {
-        confirmAction('سيتم توليد طوابق وشقق وغرف وأسرة عشوائية وتسكينها بطالبات وهميات (فوق أي بيانات موجودة حالياً في الداخلية). هل تريد المتابعة؟', () => {
+        confirmAction('سيتم توليد طوابق وشقق وغرف وأسرة عشوائية وتسكينها بالكامل (100%) بطالبات وهميات، بالإضافة لمصروفات تشغيلية تجريبية واقعية (فوق أي بيانات موجودة حالياً في الداخلية). هل تريد المتابعة؟', () => {
             const summary = DataService.seedRandomDormitoryData();
-            showToast(`تم توليد ${summary.floors} طابق و${summary.rooms} غرفة و${summary.residents} طالبة تجريبياً`, 'success');
+            showToast(`تم توليد ${summary.floors} طابق و${summary.rooms} غرفة و${summary.residents} طالبة (إشغال 100%) و${summary.expenses} بند مصروف تجريبياً`, 'success');
             Pages.settings(container);
         }, false);
     });
 
     document.getElementById('reset-dorm-only-btn').addEventListener('click', () => {
-        confirmAction('سيتم حذف كل شيء في الداخلية نهائياً (الطوابق، الشقق، الغرف، الأسرة، الطالبات، الضيفات، الخدمات، الإجازات) وأي إيرادات ناتجة عنها. الشركاء وإعدادات المالية العامة لن يتأثروا. هذا الإجراء لا يمكن التراجع عنه. هل تريد المتابعة؟', () => {
+        confirmAction('سيتم حذف كل شيء في الداخلية نهائياً (الطوابق، الشقق، الغرف، الأسرة، الطالبات، الضيفات، الخدمات، الإجازات) وأي إيرادات ومصروفات تجريبية ناتجة عنها. الشركاء وإعدادات المالية العامة والمصروفات الحقيقية لن يتأثروا. هذا الإجراء لا يمكن التراجع عنه. هل تريد المتابعة؟', () => {
             DataService.resetDormitoryOnly();
             showToast('تم إعادة تهيئة الداخلية من الصفر', 'warning');
             Pages.settings(container);

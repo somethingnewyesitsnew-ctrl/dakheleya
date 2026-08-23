@@ -1477,8 +1477,14 @@ const DataService = {
     },
 
     /* ---------------------- تعبئة عشوائية للداخلية (بيانات تجريبية) ---------------------- */
-    // يولّد هيكل داخلية عشوائي كامل (طوابق ← شقق ← غرف ← أسرة) ويسكّن جزءاً من الأسرة بطالبات
-    // وهميات (بأسماء وأرقام هاتف وجامعات عشوائية)، مع خدمات وضيفات وإجازات تجريبية —
+    // ثابت: العلامة المستخدمة لتمييز المصروفات التي ولّدها هذا المولّد تلقائياً، عشان
+    // resetDormitoryOnly() يقدر يشيلها بدقة دون المساس بأي مصروف حقيقي أدخله المستخدم يدوياً.
+    SEEDED_EXPENSE_MARKER: 'النظام (بيانات تجريبية للداخلية)',
+
+    // يولّد هيكل داخلية عشوائي كامل (طوابق ← شقق ← غرف ← أسرة) ويسكّن 100% من الأسرة بطالبات
+    // وهميات (بأسماء وأرقام هاتف وجامعات عشوائية)، مع دفعات إيجار، خدمات، ضيفات، إجازات، وأيضاً
+    // مصروفات تشغيلية واقعية (إيجار، مرتبات، كهرباء...) بنسبة من الإيراد المحصَّل — عشان صافي
+    // الربح ولوحة التحكم والتقارير والرسوم البيانية كلها تعكس وضعاً منطقياً ومترابطاً.
     // مخصص للتجربة فقط، ولا يمس الشركاء أو الإعدادات المالية العامة.
     seedRandomDormitoryData() {
         const user = Utils.currentUserName();
@@ -1524,12 +1530,12 @@ const DataService = {
             }
         }
 
-        // نسكّن حوالي 70% من الأسرة بطالبات وهميات، والباقي يتوزع بين متاح/صيانة/محجوز
+        // نسكّن 100% من الأسرة بطالبات وهميات — إشغال كامل حسب الطلب
         const shuffled = [...createdBeds].sort(() => Math.random() - 0.5);
-        const occupyCount = Math.round(shuffled.length * 0.7);
         let residentsCreated = 0;
+        let totalRevenueCollected = 0;
 
-        for (let i = 0; i < occupyCount; i++) {
+        for (let i = 0; i < shuffled.length; i++) {
             const bed = shuffled[i];
             const room = this.getRoom(bed.roomId);
             const resident = this.addResident({
@@ -1548,20 +1554,15 @@ const DataService = {
                 paymentStatus: 'مستحق', notes: 'بيانات تجريبية (تم توليدها تلقائياً)'
             });
             residentsCreated++;
-            // نسبة عشوائية من الطالبات تكون دفعت جزءاً أو كل المستحق
-            if (Math.random() < 0.6) {
+            // نسبة عشوائية من الطالبات (75%) تكون دفعت جزءاً أو كل المستحق — عشان الإيرادات
+            // تظهر فعلياً في التحصيل، لوحة التحكم، والرسوم البيانية
+            if (Math.random() < 0.75) {
                 const full = Math.random() < 0.7;
                 const amount = full ? resident.monthlyRent : Math.max(Math.round(resident.monthlyRent * (rand(30, 80) / 100)), 1);
                 this.addResidentPayment(resident.id, { amount, method: pick(['نقدي','تحويل بنكي']) });
+                totalRevenueCollected += amount;
             }
         }
-
-        // نضيف تنوّعاً للأسرة المتبقية: بعضها صيانة أو محجوز، والباقي يفضل متاح
-        shuffled.slice(occupyCount).forEach(bed => {
-            const roll = Math.random();
-            if (roll < 0.15) this.updateBedStatus(bed.id, 'صيانة', 'حالة تجريبية');
-            else if (roll < 0.28) this.updateBedStatus(bed.id, 'محجوز', 'حالة تجريبية');
-        });
 
         // خدمات تجريبية + اشتراكات عشوائية لبعض الطالبات
         const serviceDefs = [
@@ -1575,48 +1576,91 @@ const DataService = {
             services.forEach(s => { if (Math.random() < 0.35) this.assignResidentService(r.id, s.id, { price: s.price }); });
         });
 
-        // ضيفات تجريبية
+        // ضيفات تجريبية — نسجّل دفع البعض منها عشان تظهر كإيراد فعلي (إيراد استضافة)
         let guestsCreated = 0;
         const guestCount = Math.min(rand(1, 3), activeResidents.length);
+        const createdGuestIds = [];
         for (let i = 0; i < guestCount; i++) {
             const host = pick(activeResidents);
             const checkOutDate = new Date();
             checkOutDate.setDate(checkOutDate.getDate() + rand(1, 5));
-            this.addGuest({
+            const guest = this.addGuest({
                 name: `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`, hostResidentId: host.id, phone: randPhone(),
                 checkIn: Utils.todayISO(), checkOut: checkOutDate.toISOString().slice(0, 10), dailyRate: 50000
             });
+            if (guest && guest.id) createdGuestIds.push(guest.id);
             guestsCreated++;
         }
+        createdGuestIds.forEach(id => { if (Math.random() < 0.5) this.markGuestPaid(id); });
 
-        // إجازات تجريبية
-        let vacationsCreated = 0;
-        const vacationCount = Math.min(rand(0, 2), activeResidents.length);
-        for (let i = 0; i < vacationCount; i++) {
-            const r = pick(activeResidents);
-            const returnDate = new Date();
-            returnDate.setDate(returnDate.getDate() + rand(3, 14));
-            this.addVacation({
-                residentId: r.id, startDate: Utils.todayISO(), expectedReturn: returnDate.toISOString().slice(0, 10),
-                keepBed: Math.random() < 0.5, percentage: 50
-            });
-            vacationsCreated++;
-        }
+        // ملاحظة: هذا المولّد عمداً لا يُنشئ إجازات تجريبية. أي إجازة — حتى مع الاحتفاظ
+        // بالسرير — تضع حالة السرير على "محجوز للإجازة" وليس "مشغول"، وحساب نسبة الإشغال
+        // الفعلي في التطبيق (occupancyStats) يحتسب "مشغول" فقط كأسرّة مُشغَلة. إضافة إجازات
+        // هنا كانت (بالاختبار الفعلي) تُنزِّل النسبة عن 100% رغم عدم وجود أي سرير "متاح" —
+        // وده تعارض صريح مع طلب إشغال 100%، فتم إسقاطها من هذا المولّد تحديداً (الإجازات لسه
+        // متاحة عادي يدوياً من صفحة "الإجازات" لأي طالبة بعد التعبئة).
+        const vacationsCreated = 0;
+
+        // ---------------- مصروفات تشغيلية واقعية ----------------
+        // نولّد مصروفات مرتبطة بنسبة من الإيراد، عشان صافي الربح والرسوم البيانية (اتجاه
+        // الإيرادات/المصروفات، أعلى فئات المصروفات، مكوّنات الحركة النقدية) تعكس وضعاً منطقياً
+        // بدل ما تفضل فاضية أو تظهر إيرادات بدون أي مصروف مقابلها.
+        const EXPENSE_SEED_DEFS = [
+            { category: 'الإيجار', min: 0.15, max: 0.25 },
+            { category: 'المرتبات', min: 0.10, max: 0.18 },
+            { category: 'الطعام', min: 0.08, max: 0.15 },
+            { category: 'الكهرباء', min: 0.03, max: 0.07 },
+            { category: 'المياه', min: 0.02, max: 0.04 },
+            { category: 'الإنترنت', min: 0.01, max: 0.03 },
+            { category: 'النظافة', min: 0.01, max: 0.03 },
+            { category: 'الأمن', min: 0.02, max: 0.05 },
+            { category: 'الصيانة', min: 0.02, max: 0.05 },
+            { category: 'المشتريات', min: 0.01, max: 0.04 }
+        ];
+        const partnersNames = this.getPartners().map(p => p.name);
+        // نضمن قاعدة إيراد معقولة حتى لو محدش دفع فعلياً (عشان المصروفات ما تفضلش صفر)
+        const revenueBase = Math.max(totalRevenueCollected, residentsCreated * basePrice * 0.5, basePrice);
+        let expensesCreated = 0, totalExpensesSeeded = 0;
+
+        EXPENSE_SEED_DEFS.forEach(def => {
+            if (Math.random() < 0.85) {
+                const pct = def.min + Math.random() * (def.max - def.min);
+                const amount = Math.max(Math.round(revenueBase * pct), 5000);
+                this.addExpense({
+                    date: Utils.todayISO(),
+                    category: def.category,
+                    amount,
+                    chargedAmount: amount,
+                    description: `${def.category} (بيانات تجريبية للداخلية)`,
+                    paidBy: partnersNames.length ? pick(partnersNames) : '',
+                    paymentSource: pick(['نقدي','تحويل بنكي','الخزينة']),
+                    nature: 'تجاري',
+                    needsAllocation: false,
+                    status: 'مسجل',
+                    createdBy: this.SEEDED_EXPENSE_MARKER
+                });
+                expensesCreated++;
+                totalExpensesSeeded += amount;
+            }
+        });
 
         const summary = {
             floors: floorsCount, apartments: apartmentsCount, rooms: roomsCount, beds: createdBeds.length,
-            residents: residentsCreated, guests: guestsCreated, vacations: vacationsCreated
+            residents: residentsCreated, guests: guestsCreated, vacations: vacationsCreated,
+            expenses: expensesCreated, revenueCollected: totalRevenueCollected, expensesTotal: totalExpensesSeeded
         };
         this.addActivity({
-            user, action: 'ولّد بيانات داخلية عشوائية للتجربة',
-            entity: `${summary.floors} طابق، ${summary.apartments} شقة، ${summary.rooms} غرفة، ${summary.residents} طالبة`
+            user, action: 'ولّد بيانات داخلية عشوائية للتجربة (إشغال 100% + مصروفات تشغيلية واقعية)',
+            entity: `${summary.floors} طابق، ${summary.apartments} شقة، ${summary.rooms} غرفة، ${summary.residents} طالبة (100% إشغال)، ${summary.expenses} بند مصروف`
         });
         return summary;
     },
 
     // إعادة تهيئة الداخلية فقط من الصفر: يمسح الطوابق/الشقق/الغرف/الأسرة/الطالبات/الضيفات/الخدمات/
-    // الإجازات/تغييرات التسكين، وأي إيرادات ناتجة عنها — دون المساس بالشركاء أو إعدادات المالية العامة
-    // أو المصروفات أو الأصول. مخصص لإعادة الاختبار من جديد بعد "تعبئة عشوائية للتجربة".
+    // الإجازات/تغييرات التسكين، وأي إيرادات ناتجة عنها، بالإضافة إلى المصروفات التي ولّدها مولّد
+    // البيانات التجريبية تحديداً (يُعرَف عبر SEEDED_EXPENSE_MARKER) — دون المساس بالشركاء أو
+    // إعدادات المالية العامة أو أي مصروف حقيقي أدخله المستخدم بنفسه أو الأصول.
+    // مخصص لإعادة الاختبار من جديد بعد "تعبئة عشوائية للتجربة".
     resetDormitoryOnly() {
         const user = Utils.currentUserName();
         const DORM_REVENUE_CATEGORIES = ['إيراد سكن وإعاشة', 'إيراد خدمة الطعام', 'إيراد خدمة الإنترنت', 'إيراد المكتبة', 'إيراد الترحيل', 'إيراد استضافة'];
@@ -1639,8 +1683,14 @@ const DataService = {
             .filter(t => !(t.type === 'إيراد' && DORM_REVENUE_CATEGORIES.includes(t.category)));
         StorageService.set(STORAGE_KEYS.transactions, remainingTransactions);
 
+        // إزالة المصروفات التي ولّدها مولّد البيانات التجريبية فقط (عبر createdBy marker) —
+        // أي مصروف حقيقي أدخله المستخدم يدوياً أو عبر قالب دوري حقيقي يبقى كما هو دون تأثر.
+        const remainingExpenses = (StorageService.get(STORAGE_KEYS.expenses) || [])
+            .filter(e => e.createdBy !== this.SEEDED_EXPENSE_MARKER);
+        StorageService.set(STORAGE_KEYS.expenses, remainingExpenses);
+
         this.saveSettings({ roomsCount: 0, bedsCount: 0 });
-        this.addActivity({ user, action: 'أعاد تهيئة الداخلية بالكامل من الصفر', entity: 'دون التأثير على الشركاء أو الإعدادات المالية العامة' });
+        this.addActivity({ user, action: 'أعاد تهيئة الداخلية بالكامل من الصفر', entity: 'دون التأثير على الشركاء أو الإعدادات المالية العامة أو المصروفات الحقيقية' });
     }
 };
 
