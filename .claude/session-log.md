@@ -262,4 +262,60 @@ already-supplied session token (masked in all shown output), verified via the pu
 
 Ending Status: COMPLETED (TASK-008 / REQ-003).
 
+Exact Next Action: See `.claude/handoff.md` (superseded by SESSION-007 below).
+
+---
+
+## SESSION-007
+
+Date: See `git log` for this session's TASK-009 commit.
+
+Environment: Claude.ai browser chat with code-execution/bash tool enabled — a new chat session
+(no continuity from SESSION-005/006's sandbox state). The user supplied a fresh GitHub token in
+this chat; cloned the repo fresh into `/home/claude/repo_clone` and confirmed it matched
+`origin/main` at `bff0932` (TASK-008) before starting any new work — no divergence found.
+
+Starting Checkpoint: `bff0932` (TASK-008, confirmed via `git log --oneline -10` on the fresh clone —
+matched what `.claude/handoff.md`/`current-task.md` already claimed, so no state-file contradiction
+was found).
+
+Active REQ: REQ-004 (new).
+
+Active TASK: TASK-009.
+
+Work Completed: Modified `DataService.seedRandomDormitoryData()` in `js/data.js` to (1) occupy 100%
+of generated beds instead of ~70%, (2) generate realistic operating expenses as a percentage of
+seeded revenue via `addExpense()`, tagged with a new `SEEDED_EXPENSE_MARKER` constant. Extended
+`DataService.resetDormitoryOnly()` to remove only marker-tagged expenses. Updated `js/settings.js`'s
+seed-panel copy to match. During runtime testing, discovered that the initial approach (keeping
+vacation seeding with `keepBed:true`) still failed to reach 100% occupancy, because
+`occupancyStats()` only counts `'مشغول'` beds as occupied and a `keepBed:true` vacation sets bed
+status to `'محجوز للإجازة'` instead — so vacation seeding was dropped from the generator entirely
+rather than altering the shared, app-wide occupancy definition. See `.claude/tasks.md` TASK-009 for
+the itemized breakdown.
+
+Files Changed: `js/data.js`, `js/settings.js`.
+
+Validation Performed: `node --check` on both files (passed, both after the initial change and after
+the vacation-seeding fix). Runtime smoke test: a Node `vm`-based harness
+(`/tmp/smoketest/harness.js`, not committed — scratch-only) that shims
+`localStorage`/`document`/`window`, loads `js/data.js` for real via `require()` after appending a
+`module.exports`, and calls `seedRandomDormitoryData()` then `resetDormitoryOnly()` end-to-end,
+asserting: `beds.length === activeResidents.length`, `occ.available === 0`, `occ.rate === 100`,
+non-zero monthly operating expenses, a non-degenerate `calculateProfit()` result, and that
+`getMonthlyFinancials()`/`getCashBalance()`/`getReinvestmentSummary()` (the methods backing the
+dashboard's charts) all execute without throwing. Also asserted that a manually-added `addExpense()`
+call survives an interleaved seed+reset cycle (confirming `resetDormitoryOnly()`'s expense-scoping
+is precise). Initial run (5 iterations) caught the vacation/occupancy issue described above; after
+the fix, re-ran 8 additional times with fresh random data each run — all assertions passed every
+time.
+
+Checkpoint Created: Yes — commit `acc8cf3` (`feat(TASK-009): guarantee 100% occupancy + realistic
+operating expenses in dormitory seeder`), pushed to `origin/main`, confirmed via the actual push
+output line `bff0932..acc8cf3 main -> main`. Token stripped from the local remote URL immediately
+after the push, and the user was reminded in-chat that the pasted token should be treated as no
+longer secret.
+
+Ending Status: COMPLETED (TASK-009 / REQ-004).
+
 Exact Next Action: See `.claude/handoff.md`.

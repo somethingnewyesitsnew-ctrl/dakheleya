@@ -151,3 +151,50 @@ Final Outcome: Added `DataService.seedRandomDormitoryData()` and `DataService.re
 in `js/data.js`, wired to two new buttons in Settings → "الغرف والأسرة" (`js/settings.js`). Fixed
 `DataService.addVacation()`'s `residentId` reference bug in the process (discovered via a Node-based
 runtime smoke test, not just `node --check` syntax validation — see TASK-008 for the harness used).
+
+---
+
+## REQ-004
+
+Date: See `git log` for the commit date of TASK-009.
+
+Original Request Summary: (Arabic, paraphrased) After reviewing a list of known/unfinished items
+across the project, the user asked to act on most of them but explicitly deferred item #9 (a
+"random fill" for Partnership/Finance analogous to the Dormitory one — intentionally left
+unimplemented). For the Dormitory seeder specifically (TASK-008's `seedRandomDormitoryData()`), the
+user asked that the system "interact with the dormitory fill logically — profit, expenses, and
+charts and everything should work" and that occupancy be increased to 100%.
+
+Objective: Make `seedRandomDormitoryData()` occupy every generated bed (100%, not ~70%) and
+generate realistic operating expenses tied to the seeded revenue, so that profit calculations, the
+dashboard's financial/occupancy tabs, and every chart that reads from `DataService` (revenue/expense
+trend, expense-by-category, cash composition, setup-progress) reflect a coherent, non-zero financial
+picture immediately after seeding — while keeping `resetDormitoryOnly()` scoped correctly so it only
+removes the seeder's own generated expenses, never a real user-entered one.
+
+Status: COMPLETED
+
+Related Task IDs: TASK-009
+
+Completed Tasks:
+- TASK-009 — see `.claude/tasks.md` for full detail, including a real behavioral interaction found
+  via runtime testing: seeding vacations (even with `keepBed:true`) set bed status to
+  `'محجوز للإجازة'`, which the app's own `occupancyStats()` correctly excludes from `'occupied'` —
+  silently preventing a true 100% rate despite zero beds being `'متاح'`. Fixed by dropping vacation
+  seeding from the generator entirely (vacations remain fully available to add manually per-resident
+  after seeding) rather than altering the shared `occupancyStats()` definition used across the whole
+  app.
+
+Current Task: None — TASK-009 completed in the same session it was requested.
+
+Remaining Tasks: None queued for this REQ. Item #9 from the original review (a Partnership/Finance
+equivalent of the seeder) was explicitly deferred by the user and remains out of scope.
+
+Final Outcome: `js/data.js` — `seedRandomDormitoryData()` now occupies 100% of generated beds, no
+longer seeds vacations, and generates 8–10 categories of realistic operating expenses (rent,
+salaries, food, utilities, security, maintenance, purchases...) as a randomized percentage of
+collected/expected revenue, each tagged via a new `DataService.SEEDED_EXPENSE_MARKER` sentinel.
+`resetDormitoryOnly()` now also removes only expenses carrying that marker. `js/settings.js` — seed
+panel description/confirm/toast copy updated to match (100% occupancy, expense generation,
+vacations no longer mentioned). Validated via `node --check` plus a runtime Node `vm`-based smoke
+test (not just syntax-check) run 8+ times with fresh random data each run.

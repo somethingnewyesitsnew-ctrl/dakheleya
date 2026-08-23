@@ -20,10 +20,10 @@ Architecture:
 - Consolidated "hub" pages (`js/hubs.js`) group related feature pages into tabs to keep the sidebar
   to 9 top-level items (Dashboard, Partnership, Dormitory, Finance, Setup, Review, Tools, Reports, Settings)
 
-Current Phase: Workflow finalized under REQ-001 (TASK-001–006). REQ-002/TASK-007 is the first real
-application-feature work done under this system: Dashboard KPI clickability + hover tooltips +
-a chart resize-leak fix, Partners required-vs-paid capital contribution tracking (with overpayment
-auto-tracked as a debt owed to the partner), and Dormitory hub clickability + tab count badges.
+Current Phase: Workflow finalized under REQ-001 (TASK-001–006). REQ-002/TASK-007, REQ-003/TASK-008,
+and REQ-004/TASK-009 are real application-feature work done under this system, culminating in a
+dormitory test-data seeder that now produces a fully coherent 100%-occupied, profit/expense-bearing
+demo state in one click.
 
 Overall Status: Healthy. App is functional. Workflow/feature history:
 - TASK-001 (+ DECISION-002): installed the workflow scaffold, extended with task planning and a
@@ -41,9 +41,14 @@ Overall Status: Healthy. App is functional. Workflow/feature history:
 - TASK-008 (REQ-003): added random dormitory test-data seeding + a scoped dormitory-only reset
   (`js/data.js`, `js/settings.js`); found and fixed a real pre-existing bug in
   `DataService.addVacation()` (bare `residentId` instead of `data.residentId`) via runtime testing.
+- TASK-009 (REQ-004): improved the dormitory seeder to occupy 100% of generated beds (was ~70%) and
+  generate realistic operating expenses tied to seeded revenue, so profit calculations and every
+  revenue/expense-driven dashboard chart populate coherently right after seeding; dropped vacation
+  seeding after runtime testing showed it silently capped occupancy below 100%; scoped
+  `resetDormitoryOnly()` to remove only the seeder's own tagged expenses.
 
-Active Task: None — TASK-001 through TASK-008 all COMPLETED. Awaiting the user's manual smoke-test
-feedback, or the next request (see `.claude/requests.md` for REQ-003's status and `.claude/tasks.md`
+Active Task: None — TASK-001 through TASK-009 all COMPLETED. Awaiting the user's manual smoke-test
+feedback, or the next request (see `.claude/requests.md` for REQ-004's status and `.claude/tasks.md`
 for the task queue).
 
 Environment Note: This project may be accessed either via a local Claude Code checkout with Git CLI,

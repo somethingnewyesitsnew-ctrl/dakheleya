@@ -366,6 +366,75 @@ Partnership or Finance domains — only Dormitory, per what was explicitly asked
 
 ---
 
+## TASK-009
+Parent Request: REQ-004
+Title: Guarantee 100% occupancy + realistic operating expenses in the dormitory seeder
+Status: COMPLETED
+Priority: Normal (testing/demo tooling improvement)
+Description: Following a review of outstanding/unfinished items, the user asked to act on most of
+them but explicitly asked to leave item #9 (a Partnership/Finance equivalent of the Dormitory
+"random fill") out of scope. For the Dormitory seeder itself (`DataService.seedRandomDormitoryData()`
+from TASK-008), the user asked that: (a) the system "interact with the dormitory fill logically —
+profit, expenses, and charts and everything should work", and (b) occupancy be raised to 100%.
+Implemented:
+1. `seedRandomDormitoryData()` now occupies every single generated bed (100%, previously ~70%).
+2. Vacation seeding was removed from the generator entirely. Runtime testing showed that even a
+   `keepBed:true` seeded vacation sets the bed's status to `'محجوز للإجازة'`, not `'مشغول'` — and
+   `DataService.occupancyStats()` (used by the dashboard, occupancy tab, and reports) only counts
+   `'مشغول'` beds as occupied, so `occ.rate` stayed below 100% even with zero `'متاح'` beds. Rather
+   than changing that shared, app-wide occupancy definition just to accommodate the seeder, vacation
+   seeding was dropped — vacations remain fully available to add manually per-resident afterward.
+3. `seedRandomDormitoryData()` now also generates realistic operating expenses (rent, salaries,
+   food, electricity, water, internet, cleaning, security, maintenance, purchases) as a randomized
+   percentage of the seeded/collected revenue via `addExpense()`, so `calculateProfit()`, the
+   dashboard's Financial tab (revenue/expense trend chart, expense-by-category chart, cash
+   composition chart), and Reports all show a coherent non-zero financial picture immediately after
+   seeding instead of revenue with no matching expenses.
+4. Each generated expense is tagged via a new `DataService.SEEDED_EXPENSE_MARKER` constant in its
+   `createdBy` field.
+5. `resetDormitoryOnly()` now also removes only expenses carrying `SEEDED_EXPENSE_MARKER`, leaving
+   any real user-entered expense (manual, or from a real recurring-expense template) untouched.
+6. `js/settings.js` — updated the seed-data panel's description text, confirm-dialog text, and
+   success-toast text to reflect 100% occupancy and the new expense generation; removed the
+   now-inaccurate mention of seeded vacations.
+Acceptance Criteria:
+- After clicking "تعبئة عشوائية للتجربة", every generated bed is occupied: `occ.available === 0`
+  and `occ.rate === 100` for that run, verified across multiple random runs (not just once).
+- The same run also produces a non-zero `getOperatingExpensesForMonth()` for the current month, and
+  `calculateProfit()` returns a non-degenerate (non-zero, non-`NaN`) net profit and distributable
+  figure, so dashboard KPIs and charts that depend on these are populated rather than empty.
+- `getMonthlyFinancials()`, `getCashBalance()`, and `getReinvestmentSummary()` — the methods backing
+  the dashboard's trend chart, cash-composition chart, and setup-progress — all execute without
+  throwing against freshly seeded data.
+- `resetDormitoryOnly()` removes 100% of the seeder's own generated expenses and none of a real
+  user-entered expense, verified by interleaving a manual `addExpense()` call with a seed+reset
+  cycle.
+- `node --check` passes on both touched files.
+- No pre-existing behavior changed outside of `seedRandomDormitoryData()` and `resetDormitoryOnly()`
+  in `js/data.js` and the seed-panel copy in `js/settings.js`.
+Completed:
+- `js/data.js`: `seedRandomDormitoryData()` rewritten for 100% occupancy + realistic expense
+  generation; `SEEDED_EXPENSE_MARKER` constant added; `resetDormitoryOnly()` extended to remove
+  seeded expenses by that marker.
+- `js/settings.js`: seed panel copy updated (description, confirm dialog, success toast).
+Validation:
+- `node --check` on both touched files — passed.
+- **Runtime smoke test** (Node `vm`-based harness shimming `localStorage`/`document`/`window`,
+  loading `js/data.js` for real): ran `seedRandomDormitoryData()` then asserted `beds.length ===
+  activeResidents.length`, `occ.available === 0`, `occ.rate === 100`, non-zero
+  `getOperatingExpensesForMonth()`, and that `getMonthlyFinancials()`/`getCashBalance()`/
+  `getReinvestmentSummary()` all execute cleanly; then ran `resetDormitoryOnly()` and asserted every
+  dormitory collection returns to zero and zero `SEEDED_EXPENSE_MARKER` expenses remain; then
+  interleaved a real `addExpense()` call with another seed+reset cycle and asserted that real
+  expense survives. Re-ran the full harness 8+ times (random data differs each run) with all
+  assertions passing every time — this is what caught the vacation/occupancy interaction, which
+  `node --check` alone could not have caught since it's correct-syntax, incorrect-runtime-behavior.
+Checkpoint: TASK-009 (this entry)
+Next: Await user feedback. Item #9 (Partnership/Finance random-fill parity) remains explicitly out
+of scope per this request.
+
+---
+
 <!--
   Add new tasks below using the same format. Keep them small enough that another Claude session
   could pick one up cold and finish it using only the repository + this file + current-task.md +

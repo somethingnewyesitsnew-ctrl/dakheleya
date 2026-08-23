@@ -1,15 +1,28 @@
 # CURRENT TASK
 
 ## Task ID
-None active — TASK-001 through TASK-008 are all COMPLETED. Awaiting the next request from the user.
+None active — TASK-001 through TASK-009 are all COMPLETED. Awaiting the next request from the user.
 
 ## Most Recently Completed Task
-TASK-008 — Random dormitory test-data seeding + scoped dormitory-only reset. Parent Request:
-REQ-003. Also fixed a real pre-existing bug in `DataService.addVacation()` found via runtime
-testing (see `.claude/tasks.md` for detail).
+TASK-009 — Guarantee 100% occupancy + realistic operating expenses in the dormitory seeder. Parent
+Request: REQ-004. Also removed vacation seeding after runtime testing revealed it silently
+prevented a true 100% occupancy rate (see `.claude/tasks.md` for full detail).
 
 ## Status
-COMPLETED (all of TASK-001 through TASK-008)
+COMPLETED (all of TASK-001 through TASK-009)
+
+## Summary of TASK-009 (see `.claude/tasks.md` for full acceptance criteria / validation detail)
+- `js/data.js`: `seedRandomDormitoryData()` now occupies 100% of generated beds (was ~70%); no
+  longer seeds vacations (a real behavioral interaction found via runtime testing: even
+  `keepBed:true` vacations set bed status to `'محجوز للإجازة'`, which `occupancyStats()` correctly
+  excludes from `'مشغول'`/occupied — so vacations were silently capping the rate below 100% despite
+  zero `'متاح'` beds); now generates realistic operating expenses (rent, salaries, food, utilities,
+  security, maintenance, purchases) as a randomized % of seeded revenue, tagged via a new
+  `DataService.SEEDED_EXPENSE_MARKER` constant.
+- `js/data.js`: `resetDormitoryOnly()` extended to also remove only `SEEDED_EXPENSE_MARKER`-tagged
+  expenses, leaving real user-entered expenses untouched (verified via runtime test).
+- `js/settings.js`: seed-panel description/confirm/toast copy updated to match (100% occupancy,
+  expense generation, vacations no longer mentioned).
 
 ## Summary of TASK-008 (see `.claude/tasks.md` for full acceptance criteria / validation detail)
 - `js/data.js`: `seedRandomDormitoryData()` (random floors/apartments/rooms/beds + residents with
@@ -95,12 +108,13 @@ user to revoke it afterward) in `CLAUDE.md`'s "Browser Project / Git Availabilit
 answer given mid-session that wrongly implied browser chat could never push to GitHub at all.
 
 ## Current Work
-None — TASK-007 completed in the same session it was requested.
+None — TASK-009 completed in the same session it was requested.
 
 ## Remaining Work
-None queued. Not requested/not started but a natural follow-up: extend the required/paid/surplus
-contribution pattern to the Dashboard's own partner mini-cards (currently only the Partners page
-shows it in full).
+None queued. Item #9 from the review that produced this request (a Partnership/Finance equivalent
+of the Dormitory seeder) was explicitly deferred by the user and remains out of scope. Also still
+not started: extend the required/paid/surplus contribution pattern to the Dashboard's own partner
+mini-cards (currently only the Partners page shows it in full) — unrelated pre-existing follow-up.
 
 ## Known Limitation From This Session
 No browser/UI tool was available in this session to click through the app live. Validation was
