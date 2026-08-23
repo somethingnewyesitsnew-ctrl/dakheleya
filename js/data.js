@@ -171,7 +171,10 @@ const DataService = {
     },
     addPartner(data) {
         const partners = this.getPartners();
-        const record = { id: Utils.uid('partner'), name: (data.name||'').trim(), ownership: Number(data.ownership) || 0, role: data.role || 'شريك' };
+        const record = {
+            id: Utils.uid('partner'), name: (data.name||'').trim(), ownership: Number(data.ownership) || 0,
+            role: data.role || 'شريك', requiredContribution: Number(data.requiredContribution) || 0
+        };
         partners.push(record);
         StorageService.set(STORAGE_KEYS.partners, partners);
         this.addActivity({ user: Utils.currentUserName(), action: 'أضاف شريكاً جديداً', entity: record.name });
@@ -181,7 +184,11 @@ const DataService = {
         const partners = this.getPartners();
         const idx = partners.findIndex(p => p.id === id);
         if (idx === -1) return null;
-        partners[idx] = { ...partners[idx], ...patch, ownership: patch.ownership !== undefined ? Number(patch.ownership) || 0 : partners[idx].ownership };
+        partners[idx] = {
+            ...partners[idx], ...patch,
+            ownership: patch.ownership !== undefined ? Number(patch.ownership) || 0 : partners[idx].ownership,
+            requiredContribution: patch.requiredContribution !== undefined ? Number(patch.requiredContribution) || 0 : partners[idx].requiredContribution
+        };
         StorageService.set(STORAGE_KEYS.partners, partners);
         return partners[idx];
     },
@@ -1074,6 +1081,16 @@ const DataService = {
     },
     getTotalAdvancesAllPartners() {
         return this.getPartners().reduce((s,p) => s + this.getAdvancesByPartner(p.name) - this.getRepaymentsByPartner(p.name), 0);
+    },
+    // حالة مساهمة رأس المال لشريك: المطلوب مقابل المسدد فعلاً.
+    // لو سدّد أكتر من المطلوب، الزيادة تُعتبر تلقائياً سلفة/ديناً على الداخلية لصالح هذا الشريك
+    // (بالإضافة لأي سلف فعلية مسجلة له من نوع "سلفة شريك").
+    getContributionStatus(partner) {
+        const required = Number(partner.requiredContribution) || 0;
+        const paid = this.getContributionsByPartner(partner.name);
+        const remaining = Math.max(required - paid, 0);
+        const surplus = Math.max(paid - required, 0); // مبلغ زائد عن المطلوب = دين على الداخلية لهذا الشريك
+        return { required, paid, remaining, surplus, complete: required > 0 && paid >= required };
     },
 
     // الرصيد النقدي = كل الإيرادات + المساهمات + السلف - كل المصروفات (المحمّلة فعلياً) - التوزيعات المدفوعة - سداد السلف يخرج كخصم على السلفة لكنه ليس خروج نقدي فعلي إذا اعتبرناه تحويل. هنا نحسب صافي حركة نقدية.

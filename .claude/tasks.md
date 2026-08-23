@@ -232,6 +232,81 @@ Next: Await the next user request.
 
 ---
 
+## TASK-007
+Parent Request: REQ-002
+Title: Dashboard clickability/tooltips/chart-reliability + Partners required-vs-paid contribution
+tracking + Dormitory clickability/tab counts
+Status: COMPLETED
+Priority: Normal (UI/UX + one new accounting concept)
+Description: Five related changes requested together in Arabic:
+1. Make every Dashboard KPI box clickable, including the Occupancy tab's cards (previously the only
+   tab missing `link` on its `kpiCard()` calls).
+2. Make sure all dashboard charts render reliably — found and fixed a real bug: every call to
+   `Pages.dashboard` added a new `window` `resize` listener without ever removing the previous one,
+   so navigating to the dashboard repeatedly accumulated listeners that called `.resize()` on
+   already-destroyed Chart.js instances. Fixed by tracking a single named handler and removing it
+   before adding a new one, plus wrapping the resize call in try/catch as defense in depth.
+3. Add hover tooltips explaining each KPI by name. Implemented as a shared `KPI_TOOLTIPS` dictionary
+   in `js/app.js` keyed by label text (plus a small prefix-matcher for dynamic labels like
+   `نصيب ${partnerName}`), consumed automatically by the existing `kpiCard()` helper — so every page
+   that already uses `kpiCard()` picked up tooltips for free, not just the dashboard.
+4. Partners page: added a `requiredContribution` field per partner (editable from the add-partner
+   form in Settings, and per-partner from a new pencil-edit button on the Partners page). Added a
+   new "المطلوب / المسدد / المتبقي" table showing required vs. actually-paid capital, and — per the
+   request — any amount paid *beyond* the required contribution is now automatically treated as an
+   advance/debt the dormitory owes back to that partner, folded into the existing "الرصيد المستحق"
+   balance figure (which previously only reflected formal `سلفة شريك` transactions).
+5. Dormitory hub: added optional numeric count badges to `tabsShell()` (reusable by any hub page),
+   wired with real counts for all six Dormitory tabs; made room tiles inside the apartment-detail
+   modal fully clickable (previously only a small "عرض" button inside the tile was clickable).
+Acceptance Criteria:
+- Every Occupancy-tab KPI card on the Dashboard has a working link (verified: all now link to
+  `#/dormitory`).
+- The `resize` listener leak is fixed — confirmed only one handler is ever registered by re-reading
+  the diff (previous handler removed before a new one is added).
+- Hovering a KPI card's label shows a native tooltip with a plain-language explanation, for every
+  label present in `KPI_TOOLTIPS` (covers all dashboard/partners/dormitory/finance/reports KPI
+  labels found via `grep`), without needing to touch every individual call site.
+- Partners page shows required/paid/remaining per partner, with an "عدّل" action to set the required
+  amount; paying more than required shows a distinct "سلفة/دين على الداخلية" badge with the exact
+  surplus amount, and that surplus is included in the partner's overall "الرصيد المستحق".
+- Dormitory hub tab buttons show a live count badge; room tiles anywhere they render are clickable
+  without double-firing the "+ سرير" action (verified via explicit `stopPropagation()`).
+- No application file broken: `node --check` passes on every touched `.js` file.
+- No pre-existing feature removed or behavior changed outside what was requested.
+Completed:
+- `js/app.js`: `KPI_TOOLTIPS` dictionary + `kpiTooltip()` lookup + `kpiCard()` now tooltip-aware.
+- `js/dashboard.js`: Occupancy-tab `kpiCard()` calls given `link:'#/dormitory'`; resize-listener
+  leak fixed via a tracked `dashboardResizeHandler`.
+- `js/data.js`: `requiredContribution` on `addPartner`/`updatePartner`; new
+  `DataService.getContributionStatus(partner)` helper (`required`/`paid`/`remaining`/`surplus`/`complete`).
+- `js/partners.js`: new contribution table + edit-required modal; existing partner table/mini-cards'
+  "الرصيد المستحق" now includes contribution surplus, not just formal advances.
+- `js/settings.js`: required-contribution input added to the add-partner form.
+- `js/hubs.js`: `tabsShell()` accepts an optional `count` per tab; `Pages.dormitory` now computes and
+  passes real counts for all six tabs.
+- `js/dormitory.js`: `roomCardHTML()` tile is now the clickable element (`room-card-open-btn` moved
+  from a small inner button to the whole tile); `+ سرير` button given `stopPropagation()` so it no
+  longer also triggers the tile's own open-room click.
+- `css/style.css`: `.kpi-label-tip` styling (dotted underline + help cursor) for the new tooltip
+  affordance.
+Validation:
+- `node --check` run on every touched `.js` file (`app.js`, `dashboard.js`, `partners.js`,
+  `hubs.js`, `dormitory.js`, `data.js`, `settings.js`) — all passed with no syntax errors.
+- Manual re-read of the full `git diff` for every file to confirm no unrelated behavior was
+  changed and the new event-listener wiring doesn't double-fire (specifically the room-tile /
+  "+ سرير" button interaction).
+- No automated test suite exists in this repo (unchanged fact) — no further automated validation
+  was possible; a live-browser click-through was not performed in this session (no browser tool
+  available), so the user should do a quick manual smoke test of: Dashboard → Occupancy tab card
+  clicks, hovering a few KPI labels, Partners → the new contribution table and its edit button, and
+  Dormitory → a room tile click plus the tab count badges.
+Checkpoint: TASK-007 (this entry)
+Next: Await user feedback from manual testing; a natural follow-up (not requested, not started)
+would be extending the required/paid/surplus pattern to the Dashboard's own partner mini-cards.
+
+---
+
 <!--
   Add new tasks below using the same format. Keep them small enough that another Claude session
   could pick one up cold and finish it using only the repository + this file + current-task.md +

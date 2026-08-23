@@ -316,7 +316,8 @@ function openApartmentDetailModal(apartmentId, onClose) {
         });
     });
     el.querySelectorAll('.room-card-add-bed-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
             modal.hide();
             el.addEventListener('hidden.bs.modal', () => openAddBedModal(btn.dataset.room, () => openApartmentDetailModal(apartmentId, onClose)), { once: true });
         });
@@ -333,13 +334,12 @@ function roomCardHTML(room) {
     const state = DataService.getRoomOccupancyState(room.id);
     const stateColor = state === 'شاغرة بالكامل' ? 'bg-soft-success' : state === 'مشغولة بالكامل' ? 'bg-soft-danger' : 'bg-soft-warning';
     return `
-    <div class="room-tile">
+    <div class="room-tile clickable room-card-open-btn" data-room="${room.id}" title="اضغط لعرض تفاصيل الغرفة">
         <div class="room-num">غرفة ${room.number}</div>
         <div class="room-beds">${room.roomType || ''} — ${beds.length} سرير</div>
         <div class="mb-1"><span class="badge-soft ${stateColor}" style="font-size:10.5px;">${state}</span></div>
         <div class="text-muted mb-2" style="font-size:11.5px;">${occupied} مشغول · ${available} متاح · ${Utils.formatMoney(room.price||0)}</div>
         <div class="d-flex gap-1">
-            <button class="btn btn-xs btn-light border room-card-open-btn" data-room="${room.id}" style="font-size:11px;padding:3px 8px;">عرض</button>
             <button class="btn btn-xs btn-light border room-card-add-bed-btn" data-room="${room.id}" style="font-size:11px;padding:3px 8px;">+ سرير</button>
         </div>
     </div>`;

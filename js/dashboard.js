@@ -8,6 +8,7 @@ const CHART_COLORS = {
     grid: '#eef1f3', text: '#6b7a85'
 };
 let dashboardCharts = {};
+let dashboardResizeHandler = null;
 
 function destroyChart(key) {
     if (dashboardCharts[key]) { dashboardCharts[key].destroy(); delete dashboardCharts[key]; }
@@ -63,7 +64,10 @@ Pages.dashboard = function (container) {
     document.getElementById('tab-btn-partners').addEventListener('shown.bs.tab', () => renderPartnersTab(currentMonth, settings), { once: true });
 
     // إعادة رسم الرسوم عند تغيير حجم النافذة أو طي/فتح السايدبار (لتفادي مشاكل قياس Chart.js)
-    window.addEventListener('resize', () => Object.values(dashboardCharts).forEach(c => c && c.resize()));
+    // نزيل أي مستمع قديم أولاً حتى لا نراكم مستمعين على رسوم بيانية اتدمّرت من صفحات سابقة
+    if (dashboardResizeHandler) window.removeEventListener('resize', dashboardResizeHandler);
+    dashboardResizeHandler = () => Object.values(dashboardCharts).forEach(c => { try { c && c.resize(); } catch (e) { /* تم تدمير الرسم، تجاهل */ } });
+    window.addEventListener('resize', dashboardResizeHandler);
 };
 
 function renderQuickActions() {
@@ -294,19 +298,19 @@ function renderOccupancyTab(occ) {
 
     box.innerHTML = `
     <div class="row g-3">
-        ${kpiCard({ icon:'bi-grid-3x3-gap', label:'إجمالي الأسرة', value: occ.total, colorClass:'bg-soft-navy' })}
-        ${kpiCard({ icon:'bi-person-fill', label:'مشغول', value: occ.occupied, colorClass:'bg-soft-teal' })}
-        ${kpiCard({ icon:'bi-check2-circle', label:'متاح', value: occ.available, colorClass:'bg-soft-success' })}
-        ${kpiCard({ icon:'bi-speedometer2', label:'نسبة الإشغال', value: occ.rate+'%', colorClass:'bg-soft-info' })}
+        ${kpiCard({ icon:'bi-grid-3x3-gap', label:'إجمالي الأسرة', value: occ.total, colorClass:'bg-soft-navy', link:'#/dormitory' })}
+        ${kpiCard({ icon:'bi-person-fill', label:'مشغول', value: occ.occupied, colorClass:'bg-soft-teal', link:'#/dormitory' })}
+        ${kpiCard({ icon:'bi-check2-circle', label:'متاح', value: occ.available, colorClass:'bg-soft-success', link:'#/dormitory' })}
+        ${kpiCard({ icon:'bi-speedometer2', label:'نسبة الإشغال', value: occ.rate+'%', colorClass:'bg-soft-info', link:'#/dormitory' })}
     </div>
     <div class="row g-3 mt-1">
-        ${kpiCard({ icon:'bi-airplane', label:'محجوز للإجازة', value: occ.vacationHold, colorClass:'bg-soft-gold' })}
-        ${kpiCard({ icon:'bi-tools', label:'صيانة', value: occ.maintenance, colorClass:'bg-soft-danger' })}
-        ${kpiCard({ icon:'bi-door-closed', label:'إجمالي الغرف', value: rooms.length, colorClass:'bg-soft-navy' })}
-        ${kpiCard({ icon:'bi-door-open', label:'غرف شاغرة بالكامل', value: roomsAvailable, colorClass:'bg-soft-success', sub:`${roomsFull} مشغولة بالكامل — ${roomsPartial} شاغرة جزئياً` })}
+        ${kpiCard({ icon:'bi-airplane', label:'محجوز للإجازة', value: occ.vacationHold, colorClass:'bg-soft-gold', link:'#/dormitory' })}
+        ${kpiCard({ icon:'bi-tools', label:'صيانة', value: occ.maintenance, colorClass:'bg-soft-danger', link:'#/dormitory' })}
+        ${kpiCard({ icon:'bi-door-closed', label:'إجمالي الغرف', value: rooms.length, colorClass:'bg-soft-navy', link:'#/dormitory' })}
+        ${kpiCard({ icon:'bi-door-open', label:'غرف شاغرة بالكامل', value: roomsAvailable, colorClass:'bg-soft-success', sub:`${roomsFull} مشغولة بالكامل — ${roomsPartial} شاغرة جزئياً`, link:'#/dormitory' })}
     </div>
     <div class="row g-3 mt-1">
-        ${kpiCard({ icon:'bi-person-badge', label:'الطالبات', value: activeResidents.length, colorClass:'bg-soft-teal' })}
+        ${kpiCard({ icon:'bi-person-badge', label:'الطالبات', value: activeResidents.length, colorClass:'bg-soft-teal', link:'#/dormitory' })}
         ${kpiCard({ icon:'bi-airplane', label:'طالبات في إجازة', value: onVacation, colorClass:'bg-soft-gold', link:'#/dormitory' })}
         ${kpiCard({ icon:'bi-person-heart', label:'الضيفات اليوم', value: guestsToday, colorClass:'bg-soft-info', link:'#/dormitory' })}
         ${kpiCard({ icon:'bi-exclamation-circle', label:'المتأخرات بالدفع', value: overdue, colorClass:'bg-soft-danger', link:'#/dormitory' })}

@@ -1,14 +1,30 @@
 # CURRENT TASK
 
 ## Task ID
-None active — TASK-001 through TASK-006 are all COMPLETED. Awaiting the next request from the user.
+None active — TASK-001 through TASK-007 are all COMPLETED. Awaiting the next request from the user.
 
 ## Most Recently Completed Task
-TASK-006 — Vendor the `persistent-git-workflow` skill source into the repo at
-`.claude/skills/persistent-git-workflow/`. Parent Request: REQ-001.
+TASK-007 — Dashboard clickability/tooltips/chart-reliability + Partners required-vs-paid
+contribution tracking + Dormitory clickability/tab counts. Parent Request: REQ-002 (the first real
+application-feature request handled under this workflow — see `.claude/requests.md`).
 
 ## Status
-COMPLETED (all of TASK-001 through TASK-006)
+COMPLETED (all of TASK-001 through TASK-007)
+
+## Summary of TASK-007 (see `.claude/tasks.md` for full acceptance criteria / validation detail)
+- `js/app.js`: added a shared `KPI_TOOLTIPS` dictionary + `kpiTooltip()` lookup consumed by
+  `kpiCard()`, so every page using that helper gets hover tooltips automatically.
+- `js/dashboard.js`: Occupancy-tab KPI cards now all link to `#/dormitory`; fixed a real bug where
+  every dashboard visit added a new, never-removed `window` `resize` listener that called
+  `.resize()` on destroyed Chart.js instances.
+- `js/data.js`: added `requiredContribution` per partner + `DataService.getContributionStatus()`.
+- `js/partners.js`: new "المطلوب / المسدد / المتبقي" table; amounts paid beyond the required
+  contribution now show as an automatic "سلفة/دين على الداخلية" and are folded into the partner's
+  overall "الرصيد المستحق".
+- `js/settings.js`: required-contribution input added to the add-partner form.
+- `js/hubs.js` + `js/dormitory.js`: Dormitory hub tabs now show live count badges; room tiles are
+  now fully clickable (not just a small inner button).
+- `css/style.css`: tooltip affordance styling.
 
 ## Summary of completed tasks
 
@@ -69,12 +85,20 @@ user to revoke it afterward) in `CLAUDE.md`'s "Browser Project / Git Availabilit
 answer given mid-session that wrongly implied browser chat could never push to GitHub at all.
 
 ## Current Work
-None.
+None — TASK-007 completed in the same session it was requested.
 
 ## Remaining Work
-None for TASK-001–005. The next real request should be logged as `REQ-002` (if substantial, with
-its own task breakdown) or a standalone `TASK-006`/`BUG-001` (if small) — see `.claude/requests.md`
-and `CLAUDE.md` → "User Request → Task Plan" for which applies.
+None queued. Not requested/not started but a natural follow-up: extend the required/paid/surplus
+contribution pattern to the Dashboard's own partner mini-cards (currently only the Partners page
+shows it in full).
+
+## Known Limitation From This Session
+No browser/UI tool was available in this session to click through the app live. Validation was
+`node --check` (syntax) on every touched file plus a manual re-read of each diff. The user should
+do a quick manual smoke test: Dashboard → Occupancy tab card clicks + hovering a few KPI labels;
+Partners → the new contribution table + its edit button; Dormitory → a room-tile click + the tab
+count badges (and confirm the "+ سرير" button on a room tile still only adds a bed, doesn't also
+open the room modal).
 
 ## Changed Files (TASK-004 only)
 - `.claude/requests.md` (new)

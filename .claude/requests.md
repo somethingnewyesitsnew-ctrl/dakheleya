@@ -72,3 +72,47 @@ Remaining Tasks: None currently queued beyond TASK-004. Future substantial reque
 their own `REQ-0NN` entry.
 
 Final Outcome: (updated as TASK-004 completes — see `.claude/current-task.md` and `.claude/handoff.md`)
+
+---
+
+## REQ-002
+
+Date: See `git log` for the commit date of TASK-007.
+
+Original Request Summary: First real application-feature request under this workflow (Arabic,
+paraphrased): make every KPI box on the Dashboard clickable — including the Occupancy tab, which
+was missing links; make sure all dashboard charts render reliably; add hover tooltips explaining
+each KPI/metric by name; on the Partners page, track a "required contribution" per partner against
+what they've actually paid, show the remaining amount, and treat any amount paid *beyond* the
+required contribution as an automatic advance/debt owed by the dormitory back to that partner (or
+potentially another person); and in the Dormitory hub, make all the boxes/tiles clickable and show
+numeric counts on the hub's tabs.
+
+Objective: Improve dashboard/dormitory/partners UX (navigability, chart reliability, in-context
+help) and add a real missing accounting concept (required vs. paid capital contribution, with
+overpayment automatically tracked as a debt owed to the partner).
+
+Status: COMPLETED
+
+Related Task IDs: TASK-007 (single task, five acceptance-criteria groups — scoped small enough not
+to need dotted sub-task IDs, per CLAUDE.md's "match the ceremony to the size of the task" guidance)
+
+Completed Tasks:
+- TASK-007 — see `.claude/tasks.md` for full detail.
+
+Current Task: None — TASK-007 completed in the same session it was requested.
+
+Remaining Tasks: None queued for this REQ. Possible natural follow-ups (not requested, not started):
+extending the "required contribution → paid → remaining/surplus" pattern to the Dashboard's own
+partner mini-cards for full parity with the Partners page, and to a non-partner "other person"
+creditor concept if the user later asks for money owed to someone outside the registered partner
+list.
+
+Final Outcome: Implemented directly in `js/app.js` (KPI tooltip dictionary + tooltip-aware
+`kpiCard()`), `js/dashboard.js` (Occupancy-tab KPI links + a chart `resize` listener leak fix),
+`js/data.js` (`requiredContribution` field on partners + `getContributionStatus()`), `js/partners.js`
+(new "المطلوب/المسدد/المتبقي" table + surplus-as-debt display, folded into the existing balance
+figure), `js/settings.js` (required-contribution input on the add-partner form), `js/hubs.js`
+(tab count badges, wired for the Dormitory hub), `js/dormitory.js` (room tiles now fully clickable),
+and `css/style.css` (tooltip affordance styling). No test suite exists; validated via `node --check`
+on every touched JS file and manual re-read of each diff — see `.claude/current-task.md`.

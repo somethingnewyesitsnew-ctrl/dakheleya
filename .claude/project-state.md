@@ -20,27 +20,29 @@ Architecture:
 - Consolidated "hub" pages (`js/hubs.js`) group related feature pages into tabs to keep the sidebar
   to 9 top-level items (Dashboard, Partnership, Dormitory, Finance, Setup, Review, Tools, Reports, Settings)
 
-Current Phase: Workflow finalized under REQ-001 (TASK-001 through TASK-004 all complete). The
-project continuity system now includes: state files, a request ledger (`requests.md`), a per-session
-log (`session-log.md`), Git-CLI-optional operation, task planning/decomposition, milestone-level
-checkpointing, cross-account divergence handling, and a project-health check. No application
-feature work has started under this system yet — TASK-002 (bell removal) is the only application
-code touched so far, and was a small standalone UI change, not a multi-phase feature.
+Current Phase: Workflow finalized under REQ-001 (TASK-001–006). REQ-002/TASK-007 is the first real
+application-feature work done under this system: Dashboard KPI clickability + hover tooltips +
+a chart resize-leak fix, Partners required-vs-paid capital contribution tracking (with overpayment
+auto-tracked as a debt owed to the partner), and Dormitory hub clickability + tab count badges.
 
-Overall Status: Healthy. App is functional. Workflow history:
+Overall Status: Healthy. App is functional. Workflow/feature history:
 - TASK-001 (+ DECISION-002): installed the workflow scaffold, extended with task planning and a
   first cross-session/cross-account recovery procedure.
-- TASK-002 (separate session): removed the header notification bell/dropdown/badge and its
-  supporting JS/CSS. The dashboard's own attention-items box is unaffected.
-- TASK-003 (separate session): made `CLAUDE.md` work correctly whether Git CLI is available or not.
+- TASK-002: removed the header notification bell/dropdown/badge and its supporting JS/CSS.
+- TASK-003: made `CLAUDE.md` work correctly whether Git CLI is available or not.
 - A real branch divergence between the TASK-001 extension and TASK-002/TASK-003 was reconciled via
-  a merge commit (`f923a1d`), combining both sides.
-- TASK-004: added the request ledger and session log, and formalized session recovery (with a
-  STOP-on-contradiction rule), cross-account continuation, checkpoint frequency, project health
-  checks, and authentication/secrets handling in `CLAUDE.md`.
+  a merge commit (`f923a1d`).
+- TASK-004: added the request ledger and session log, formalized session recovery, cross-account
+  continuation, checkpoint frequency, project health checks, authentication/secrets handling.
+- TASK-005: documented the confirmed browser-session GitHub push method (DECISION-004).
+- TASK-006: vendored the `persistent-git-workflow` skill source into `.claude/skills/`.
+- TASK-007 (REQ-002): first application-feature request — see `.claude/tasks.md` for full detail.
+  Implemented in a local clone this session; **not yet committed/pushed** (no push requested this
+  session) — see `.claude/handoff.md` → "Latest Git Information".
 
-Active Task: None — TASK-001 through TASK-004 all COMPLETED. Awaiting the next request (see
-`.claude/requests.md` for REQ-001's status and `.claude/tasks.md` for the task queue).
+Active Task: None — TASK-001 through TASK-007 all COMPLETED. Awaiting the user's manual smoke-test
+feedback on TASK-007, or the next request (see `.claude/requests.md` for REQ-002's status and
+`.claude/tasks.md` for the task queue).
 
 Environment Note: This project may be accessed either via a local Claude Code checkout with Git CLI,
 or via a browser-based Claude Project connected to GitHub without a local `.git` directory.

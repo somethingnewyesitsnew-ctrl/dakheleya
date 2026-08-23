@@ -5,10 +5,10 @@
    ========================================================================== */
 
 function tabsShell(tabs) {
-    // tabs: [{ id, title, icon, desc }]
+    // tabs: [{ id, title, icon, desc, count }] — count (رقم اختياري) يظهر كـ badge بجانب اسم التاب
     return `
     <ul class="nav nav-pills tab-pill gap-2 mb-3 flex-wrap" role="tablist">
-        ${tabs.map((t, i) => `<li class="nav-item"><button class="nav-link ${i===0?'active':''}" id="${t.id}-tab-btn" data-bs-toggle="pill" data-bs-target="#${t.id}" type="button"><i class="bi ${t.icon} me-1"></i>${t.title}</button></li>`).join('')}
+        ${tabs.map((t, i) => `<li class="nav-item"><button class="nav-link ${i===0?'active':''}" id="${t.id}-tab-btn" data-bs-toggle="pill" data-bs-target="#${t.id}" type="button"><i class="bi ${t.icon} me-1"></i>${t.title}${t.count !== undefined ? ` <span class="badge-soft bg-soft-navy ms-1" style="font-size:10.5px;">${t.count}</span>` : ''}</button></li>`).join('')}
     </ul>
     <div class="tab-content">
         ${tabs.map((t, i) => `<div class="tab-pane fade ${i===0?'show active':''}" id="${t.id}">
@@ -48,18 +48,25 @@ Pages.partnership = function (container) {
 
 /* ---------------- الداخلية ---------------- */
 Pages.dormitory = function (container) {
+    const activeResidentsCount = DataService.getResidents().filter(r => !r.checkOut).length;
+    const availableBedsCount = DataService.getBeds().filter(b => b.status === 'متاح').length;
+    const guestsTodayCount = DataService.getGuestsToday().length;
+    const activeServicesCount = DataService.getAllResidentServices().filter(rs => rs.status === 'نشطة').length;
+    const activeVacationsCount = DataService.getActiveVacations().length;
+    const floorsCount = DataService.getFloors().length;
+
     const tabs = [
-        { id: 'dh-structure', title: 'هيكل الداخلية', icon: 'bi-diagram-3',
+        { id: 'dh-structure', title: 'هيكل الداخلية', icon: 'bi-diagram-3', count: floorsCount,
           desc: 'الهيكل الكامل: طابق ← شقة ← غرفة ← سرير. أضف الطوابق والشقق والغرف والأسرة من هنا، واضغط على أي عنصر لعرض تفاصيله.' },
-        { id: 'dh-residents', title: 'الطالبات', icon: 'bi-person-badge',
+        { id: 'dh-residents', title: 'الطالبات', icon: 'bi-person-badge', count: activeResidentsCount,
           desc: 'بيانات كل طالبة ساكنة، بما فيها بيانات أهلها، ومدفوعاتها، وخدماتها، وسجل أي تعديل حصل على ملفها.' },
-        { id: 'dh-housing', title: 'التسكين والتحصيل', icon: 'bi-house-check',
+        { id: 'dh-housing', title: 'التسكين والتحصيل', icon: 'bi-house-check', count: availableBedsCount,
           desc: '<b>التسكين</b> = تسجيل طالبة جديدة في سرير فاضي. <b>التحصيل</b> = متابعة مين دفعت إيجارها الشهري ومين لسه ما دفعتش.' },
-        { id: 'dh-guests', title: 'الضيفات', icon: 'bi-person-heart',
+        { id: 'dh-guests', title: 'الضيفات', icon: 'bi-person-heart', count: guestsTodayCount,
           desc: 'زائرات مؤقتات تستضيفهن إحدى الطالبات — دخلهن منفصل عن إيراد السكن ولا يؤثر على إشغال سرير المضيفة.' },
-        { id: 'dh-services', title: 'الخدمات', icon: 'bi-stars',
+        { id: 'dh-services', title: 'الخدمات', icon: 'bi-stars', count: activeServicesCount,
           desc: 'خدمات إضافية (طعام، إنترنت، مكتبة، ترحيل...) تُفعَّل لكل طالبة بشكل مستقل عن سعر السكن.' },
-        { id: 'dh-vacations', title: 'الإجازات', icon: 'bi-airplane',
+        { id: 'dh-vacations', title: 'الإجازات', icon: 'bi-airplane', count: activeVacationsCount,
           desc: 'إجازات الطالبات، مع خيار الاحتفاظ بالسرير مقابل نسبة من الإيجار الشهري.' }
     ];
     container.innerHTML = tabsShell(tabs);

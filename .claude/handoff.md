@@ -10,38 +10,41 @@ the full ledger entry. Currently IN_PROGRESS as a living system (each extension 
 no application-feature request is active.
 
 ## Session Status
-Complete — TASK-006 implemented (vendored the `persistent-git-workflow` skill source into
-`.claude/skills/`), on top of TASK-001 through TASK-005.
+Complete — TASK-007 implemented (Dashboard clickability/tooltips/chart fix + Partners required-vs-
+paid contribution tracking + Dormitory clickability/tab counts), on top of TASK-001 through
+TASK-006. This is the first application-feature request handled under this workflow (REQ-002).
 
 ## Active Task
-None — awaiting the next request from the user.
+None — awaiting the next request from the user, or the user's feedback from manually smoke-testing
+TASK-007's changes.
 
 ## Task Status
-COMPLETED (TASK-001, TASK-002, TASK-003, TASK-004, TASK-005, TASK-006)
+COMPLETED (TASK-001 through TASK-007)
 
 ## Last Checkpoint
-TASK-006 — see `.claude/current-task.md` for full detail and `git log` for the commit SHA.
+TASK-007 — see `.claude/current-task.md` and `.claude/tasks.md` for full detail.
 
 ## Completed
-- **TASK-001** (+ DECISION-002): workflow scaffold + task planning/decomposition + first
-  cross-session recovery procedure.
-- **TASK-002**: header notification bell/dropdown removed (`js/app.js`, `css/style.css`).
-- **TASK-003**: `CLAUDE.md` made to work correctly with or without a local Git CLI.
-- Reconciled a real branch divergence between TASK-001's extension and TASK-002/TASK-003 via a
-  merge commit (`f923a1d`), combining both sides rather than discarding either.
-- **TASK-004**: added `.claude/requests.md` (request ledger), `.claude/session-log.md` (per-session
-  log), `.claude/sessions/` (placeholder dir); extended `CLAUDE.md` with a fuller Session Recovery
-  procedure (Active Request / State Consistency fields, STOP-on-contradiction rule), a
-  Cross-Account Continuation section, a Checkpoint Frequency section with a worked example, a
-  Project Health check format, an Authentication/Secrets section, and an extended Final Task
-  Checkpoint Report format. Updated `.claude/README.md`'s file table accordingly.
+- **TASK-001** through **TASK-006**: workflow scaffold, task planning/decomposition, Git-optional
+  operation, request ledger + session log, confirmed browser-push method, vendored skill source.
+  See `.claude/tasks.md` for full per-task detail.
+- **TASK-007** (REQ-002, this session): Dashboard — every KPI box now clickable (Occupancy tab was
+  the gap), a shared hover-tooltip dictionary wired into the existing `kpiCard()` helper (so it
+  applies app-wide, not just the dashboard), and a real chart-`resize`-listener memory-leak bug
+  fixed. Partners — added a per-partner "required contribution" vs. paid/remaining, with any
+  overpayment automatically shown (and totaled into the balance) as an advance/debt the dormitory
+  owes back to that partner. Dormitory — hub tabs now show live numeric count badges
+  (`tabsShell()` extended generically), and room tiles are now fully clickable, not just a small
+  inner button.
 
 ## Currently Working On
-Nothing — session complete.
+Nothing — session complete, pending the user's manual smoke test (see "Known Issues" below) and any
+follow-up feedback.
 
 ## Last Completed Step
-Committed TASK-004's changes; pushed if a token was supplied and the push actually succeeded (verify
-via `git log --oneline -5` and the push command's own output — never assume).
+Implemented and validated TASK-007 in a local clone at `/home/claude/repo` (cloned read-only, no
+token — no push was requested this session). Updated all `.claude/*` state files. **Not committed
+to Git yet** — see "Latest Git Information" below.
 
 ## Current File
 N/A
@@ -50,27 +53,31 @@ N/A
 N/A
 
 ## Remaining
-Nothing for TASK-001–004. Next session should wait for a new request, log it as `REQ-002` (if
-substantial) or a standalone task (if small), and follow the now-finalized workflow.
+Nothing queued. Possible natural follow-up (not requested, not started): extend the
+required/paid/surplus contribution pattern to the Dashboard's own partner mini-cards for full
+parity with the Partners page.
 
-## Changed Files (TASK-004)
-- `.claude/requests.md` (new)
-- `.claude/session-log.md` (new)
-- `.claude/sessions/README.md` (new)
-- `CLAUDE.md` (extended — see current-task.md for the itemized list)
-- `.claude/README.md` (file table updated)
-- `.claude/tasks.md`, `.claude/current-task.md`, `.claude/handoff.md` (this file),
-  `.claude/project-state.md`, `.claude/decisions.md` (state updated for TASK-004)
+## Changed Files (TASK-007)
+- `js/app.js` — `KPI_TOOLTIPS` dictionary, `kpiTooltip()`, tooltip-aware `kpiCard()`
+- `js/dashboard.js` — Occupancy-tab KPI links, resize-listener leak fix
+- `js/data.js` — `requiredContribution` field, `DataService.getContributionStatus()`
+- `js/partners.js` — new contribution table, edit-required modal, surplus folded into balance
+- `js/settings.js` — required-contribution input on the add-partner form
+- `js/hubs.js` — `tabsShell()` count-badge support, wired for Dormitory hub tabs
+- `js/dormitory.js` — room tiles fully clickable, `+ سرير` button `stopPropagation()`
+- `css/style.css` — `.kpi-label-tip` tooltip affordance styling
+- `.claude/requests.md`, `.claude/tasks.md`, `.claude/current-task.md`, `.claude/handoff.md` (this
+  file), `.claude/session-log.md`, `.claude/project-state.md` — state updated for TASK-007/REQ-002
 
 ## Files Changed
 Same as above.
 
 ## Tests / Checks
-No automated test suite exists in this repo (verified, unchanged). TASK-004 was documentation/
-workflow-only; validated manually — confirmed no application file (`index.html`/`css/`/`js/`)
-touched, confirmed `CLAUDE.md`'s section structure is coherent and non-contradictory, confirmed no
-secrets appear anywhere in the new/modified files, and performed the newly-added Project Health
-check itself before starting (reported HEALTHY).
+No automated test suite exists in this repo (verified, unchanged). `node --check` run on every
+touched `.js` file (all passed, no syntax errors). Manual re-read of the full `git diff` per file,
+specifically checking the new room-tile click-vs-"+ سرير"-button interaction for event
+double-firing. **No live browser click-through was performed** — no browser/UI tool was available
+in this session; this is an explicit known limitation, not silently skipped.
 
 ## Validation
 See "Tests / Checks" above.
@@ -79,6 +86,13 @@ See "Tests / Checks" above.
 None.
 
 ## Known Issues
+- **New (this session)**: TASK-007's changes have not been manually smoke-tested in a live browser.
+  Recommend the user check: Dashboard → Occupancy tab card clicks + hovering a few KPI labels;
+  Partners → the new "المطلوب/المسدد/المتبقي" table + its pencil-edit button; Dormitory → a room
+  tile click (should open the room modal) and its "+ سرير" button (should only add a bed, not also
+  open the room modal) + the new tab count badges.
+- `.claude/requests.md`'s REQ-001 entry doesn't list TASK-005/TASK-006 in its "Related Task IDs" —
+  minor pre-existing staleness noted during this session's recovery, not yet fixed (cosmetic only).
 - No `.gitignore` in the repo (still unaddressed — out of scope for all tasks so far).
 - Stray empty `New Text Document (2).txt` in repo root — harmless, noted for possible cleanup.
 - Possible leftover defensive code in `js/residents.js` (`openAddResidentModal`'s rent-autofill
@@ -89,25 +103,19 @@ None.
 None.
 
 ## Latest Git Information
-See `git log --oneline -10` at handoff time. If Git CLI was unavailable in a given session, this
-field must instead read "UNAVAILABLE IN CURRENT ENVIRONMENT" rather than being guessed.
+Local clone (`/home/claude/repo`) matched `origin/main` at `4988b6c` (TASK-006) before this
+session's changes. This session's TASK-007 changes are staged/present in that local clone but
+**not yet committed or pushed** — no GitHub token was requested or supplied this session since no
+push was asked for. If the user wants this pushed to `origin/main`, a token will need to be
+supplied once for this chat session per `CLAUDE.md` → "Confirmed working method".
 
 ## Exact Next Action
-When the user requests new work:
-1. Run the full Session Recovery procedure (`CLAUDE.md` → "Session Recovery") — read
-   `project-state.md`, `requests.md`, `tasks.md`, `current-task.md`, this file, `session-log.md`,
-   and `decisions.md` when relevant; check Git status/remote divergence if Git is available.
-2. Perform a Project Health check before starting substantial work.
-3. If the request is substantial: create `REQ-002` in `.claude/requests.md`, break it into
-   `TASK-005.x`-style sub-tasks in `.claude/tasks.md` with acceptance criteria, and persist the plan
-   before writing any code.
-4. If small: log a single task/bug directly.
-5. Implement only what the task requires; checkpoint after every meaningful milestone, not just at
-   the end.
-6. Add a new `SESSION-xxx` entry to `.claude/session-log.md` for this session's work.
-7. Manually validate per `CLAUDE.md` → "Validation" (no automated tests exist).
-8. Update all state files; commit/checkpoint/push when Git is available and say so explicitly;
-   state plainly when it is not.
+1. If the user wants TASK-007 pushed to GitHub: ask for a token once (per `CLAUDE.md`), commit as
+   `feat(TASK-007): dashboard clickability/tooltips/chart fix + partner contribution tracking +
+   dormitory clickability/tab counts`, push, and report the actual push output.
+2. Otherwise, await the user's manual smoke-test feedback or the next request.
+3. For any new request: run Session Recovery, do a Project Health check, log a new `REQ-xxx`/
+   `TASK-xxx` as appropriate, implement, validate, update state files, add a `SESSION-xxx` entry.
 
 ## Important Notes
 - This project has no build step, no package manager, no test suite.

@@ -228,7 +228,12 @@ function openAddPartnerModal() {
             <form id="partner-form">
                 <div class="mb-3"><label class="form-label fw-bold">اسم الشريك</label><input class="form-control" name="name" required></div>
                 <div class="mb-3"><label class="form-label fw-bold">نسبة الملكية (%)</label><input type="number" class="form-control" name="ownership" min="0" max="100" required></div>
-                <div class="mb-1"><label class="form-label fw-bold">الصفة</label><input class="form-control" name="role" placeholder="شريك مؤسس" value="شريك مؤسس"></div>
+                <div class="mb-3"><label class="form-label fw-bold">الصفة</label><input class="form-control" name="role" placeholder="شريك مؤسس" value="شريك مؤسس"></div>
+                <div class="mb-1">
+                    <label class="form-label fw-bold">المساهمة المطلوبة (رأس المال المتفق عليه)</label>
+                    <input type="number" class="form-control" name="requiredContribution" min="0" value="0">
+                    <div class="form-text" style="font-size:11px;">أي مبلغ يسدده الشريك أكتر من هذا الرقم يُعتبر تلقائياً سلفة/ديناً على الداخلية له — يمكن تعديله لاحقاً من صفحة الشركاء.</div>
+                </div>
             </form>
           </div>
           <div class="modal-footer">

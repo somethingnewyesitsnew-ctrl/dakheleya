@@ -279,6 +279,13 @@ body {
     margin-bottom: 4px;
 }
 
+.kpi-label-tip {
+    cursor: help;
+    border-bottom: 1px dotted var(--text-muted);
+    display: inline-block;
+}
+.kpi-label-tip i { opacity: .55; }
+
 .kpi-card .kpi-value {
     font-size: 22px;
     font-weight: 800;

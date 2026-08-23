@@ -177,6 +177,50 @@ Validation Performed: See `.claude/current-task.md`.
 Checkpoint Created: See `.claude/current-task.md` / `.claude/handoff.md` for the latest checkpoint
 and commit reference.
 
-Ending Status: See `.claude/current-task.md`.
+Ending Status: COMPLETED (TASK-004 through TASK-006, across the prior sessions this entry covers —
+see `.claude/tasks.md`).
+
+Exact Next Action: See `.claude/handoff.md` as of that point (superseded by SESSION-005 below).
+
+---
+
+## SESSION-005
+
+Date: See `git log` for this session's TASK-007 commit.
+
+Environment: Claude.ai browser chat with code-execution/bash tool enabled; cloned the repo
+read-only over HTTPS (public repo, no token needed since no push was requested this session) into
+the sandbox at `/home/claude/repo`, matching `origin/main` at commit `4988b6c` (TASK-006) before any
+new work began.
+
+Starting Checkpoint: `4988b6c` (TASK-006, confirmed via `git log --oneline -10` on the fresh clone —
+matched what `.claude/current-task.md`/`handoff.md` already claimed, so no state-file contradiction
+was found).
+
+Active REQ: REQ-002 (new — first real application-feature request handled under this workflow).
+
+Active TASK: TASK-007.
+
+Work Completed: Implemented all five parts of the user's request — see `.claude/tasks.md` TASK-007
+for the itemized breakdown (Dashboard KPI clickability + tooltip dictionary + chart resize-leak
+fix; Partners required-vs-paid contribution tracking with surplus-as-debt; Dormitory tab count
+badges + fully-clickable room tiles).
+
+Files Changed: `js/app.js`, `js/dashboard.js`, `js/data.js`, `js/partners.js`, `js/settings.js`,
+`js/hubs.js`, `js/dormitory.js`, `css/style.css`.
+
+Validation Performed: `node --check` on every touched `.js` file (all passed). Manual re-read of
+the full `git diff` per file, specifically checking the new room-tile click-vs-"+ سرير"-button
+interaction for event double-firing (fixed via `stopPropagation()`). No live browser click-through
+was possible in this session (no browser/UI tool available) — flagged explicitly to the user as a
+known limitation rather than implied as done.
+
+Checkpoint Created: State files updated (this entry, `tasks.md`, `current-task.md`, `handoff.md`,
+`requests.md`, `project-state.md`). Git commit: not yet pushed as of this checkpoint — no GitHub
+token was requested/supplied this session since the user didn't ask for a push; changes exist in
+the session's local clone. See `.claude/handoff.md` for the exact status.
+
+Ending Status: COMPLETED (TASK-007 / REQ-002), pending the user's manual smoke test and optionally
+asking for a push to `origin/main`.
 
 Exact Next Action: See `.claude/handoff.md`.
