@@ -223,4 +223,43 @@ the session's local clone. See `.claude/handoff.md` for the exact status.
 Ending Status: COMPLETED (TASK-007 / REQ-002), pending the user's manual smoke test and optionally
 asking for a push to `origin/main`.
 
+Exact Next Action: See `.claude/handoff.md` (superseded by SESSION-006 below).
+
+---
+
+## SESSION-006
+
+Date: See `git log` for this session's TASK-008 commit.
+
+Environment: Claude.ai browser chat with code-execution/bash tool enabled — same chat session as
+SESSION-005. Re-used the GitHub token the user supplied earlier in this chat for TASK-007's push
+(per `CLAUDE.md` — not re-requested); re-cloned/re-fetched to confirm the local clone still matched
+`origin/main` at `c030d90` (TASK-007) before starting new work.
+
+Starting Checkpoint: `c030d90` (TASK-007, confirmed via `git log`/`git ls-remote` — no divergence).
+
+Active REQ: REQ-003 (new).
+
+Active TASK: TASK-008.
+
+Work Completed: Added `DataService.seedRandomDormitoryData()` and `DataService.resetDormitoryOnly()`
+in `js/data.js`, wired to two new buttons in `js/settings.js`. Found and fixed a real pre-existing
+bug during runtime testing: `DataService.addVacation()` referenced a bare `residentId` instead of
+`data.residentId`. See `.claude/tasks.md` TASK-008 for full detail.
+
+Files Changed: `js/data.js`, `js/settings.js`.
+
+Validation Performed: `node --check` on both files (passed). Additionally — going further than any
+prior session in this project — wrote a throwaway Node runtime harness that shims
+`localStorage`/`document`/`window`, loads `js/data.js` for real, and calls both new methods
+end-to-end, asserting sane counts before/after; ran it 6 times total to account for randomness. This
+is what caught the `addVacation()` bug, which pure syntax-checking (`node --check`) could not have
+caught since it was a valid-syntax runtime `ReferenceError`.
+
+Checkpoint Created: Yes — state files updated, then committed and pushed to `origin/main` using the
+already-supplied session token (masked in all shown output), verified via the push command's actual
+`<old-sha>..<new-sha> main -> main` confirmation line.
+
+Ending Status: COMPLETED (TASK-008 / REQ-003).
+
 Exact Next Action: See `.claude/handoff.md`.

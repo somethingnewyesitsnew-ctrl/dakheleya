@@ -10,41 +10,40 @@ the full ledger entry. Currently IN_PROGRESS as a living system (each extension 
 no application-feature request is active.
 
 ## Session Status
-Complete — TASK-007 implemented (Dashboard clickability/tooltips/chart fix + Partners required-vs-
-paid contribution tracking + Dormitory clickability/tab counts), on top of TASK-001 through
-TASK-006. This is the first application-feature request handled under this workflow (REQ-002).
+Complete — TASK-008 implemented (random dormitory test-data seeding + scoped dormitory-only reset,
+plus a real pre-existing bug fix in `DataService.addVacation()` found via runtime testing), on top
+of TASK-001 through TASK-007.
 
 ## Active Task
-None — awaiting the next request from the user, or the user's feedback from manually smoke-testing
-TASK-007's changes.
+None — awaiting the next request from the user, or feedback from testing TASK-007/TASK-008.
 
 ## Task Status
-COMPLETED (TASK-001 through TASK-007)
+COMPLETED (TASK-001 through TASK-008)
 
 ## Last Checkpoint
-TASK-007 — see `.claude/current-task.md` and `.claude/tasks.md` for full detail.
+TASK-008 — see `.claude/current-task.md` and `.claude/tasks.md` for full detail.
 
 ## Completed
-- **TASK-001** through **TASK-006**: workflow scaffold, task planning/decomposition, Git-optional
-  operation, request ledger + session log, confirmed browser-push method, vendored skill source.
-  See `.claude/tasks.md` for full per-task detail.
-- **TASK-007** (REQ-002, this session): Dashboard — every KPI box now clickable (Occupancy tab was
-  the gap), a shared hover-tooltip dictionary wired into the existing `kpiCard()` helper (so it
-  applies app-wide, not just the dashboard), and a real chart-`resize`-listener memory-leak bug
-  fixed. Partners — added a per-partner "required contribution" vs. paid/remaining, with any
-  overpayment automatically shown (and totaled into the balance) as an advance/debt the dormitory
-  owes back to that partner. Dormitory — hub tabs now show live numeric count badges
-  (`tabsShell()` extended generically), and room tiles are now fully clickable, not just a small
-  inner button.
+- **TASK-001** through **TASK-007**: workflow scaffold, task planning/decomposition, Git-optional
+  operation, request ledger + session log, confirmed browser-push method, vendored skill source,
+  dashboard/partners/dormitory UX improvements. See `.claude/tasks.md` for full per-task detail.
+- **TASK-008** (REQ-003, this session): added `DataService.seedRandomDormitoryData()` and
+  `DataService.resetDormitoryOnly()`, wired to two new buttons in Settings → "الغرف والأسرة", both
+  behind confirmation dialogs. Along the way, found and fixed a real pre-existing bug via runtime
+  testing (not just `node --check`): `DataService.addVacation()` referenced a bare `residentId`
+  instead of `data.residentId`, which would throw for *any* real user trying to add a vacation —
+  fixed to `residentId: data.residentId`.
 
 ## Currently Working On
-Nothing — session complete, pending the user's manual smoke test (see "Known Issues" below) and any
-follow-up feedback.
+Nothing — session complete, pending user feedback.
 
 ## Last Completed Step
-Implemented and validated TASK-007 in a local clone at `/home/claude/repo` (cloned read-only, no
-token — no push was requested this session). Updated all `.claude/*` state files. **Not committed
-to Git yet** — see "Latest Git Information" below.
+Implemented and validated TASK-008 in the same local clone at `/home/claude/repo`. Ran a Node
+runtime smoke test (not committed — scratch file only) that actually executes
+`seedRandomDormitoryData()` then `resetDormitoryOnly()` against a shimmed `localStorage`, 6 times
+total (varying random output each run) with no exceptions after the `addVacation()` fix. Committed
+and **pushed to `origin/main`** using the token supplied earlier in this chat session (reused per
+`CLAUDE.md` — not re-requested).
 
 ## Current File
 N/A
@@ -53,69 +52,64 @@ N/A
 N/A
 
 ## Remaining
-Nothing queued. Possible natural follow-up (not requested, not started): extend the
-required/paid/surplus contribution pattern to the Dashboard's own partner mini-cards for full
-parity with the Partners page.
+Nothing queued. Not requested/not started: no equivalent "random fill" exists for Partnership or
+Finance — only Dormitory, per what was explicitly asked both times.
 
-## Changed Files (TASK-007)
-- `js/app.js` — `KPI_TOOLTIPS` dictionary, `kpiTooltip()`, tooltip-aware `kpiCard()`
-- `js/dashboard.js` — Occupancy-tab KPI links, resize-listener leak fix
-- `js/data.js` — `requiredContribution` field, `DataService.getContributionStatus()`
-- `js/partners.js` — new contribution table, edit-required modal, surplus folded into balance
-- `js/settings.js` — required-contribution input on the add-partner form
-- `js/hubs.js` — `tabsShell()` count-badge support, wired for Dormitory hub tabs
-- `js/dormitory.js` — room tiles fully clickable, `+ سرير` button `stopPropagation()`
-- `css/style.css` — `.kpi-label-tip` tooltip affordance styling
+## Changed Files (TASK-008)
+- `js/data.js` — `seedRandomDormitoryData()`, `resetDormitoryOnly()`, and the `addVacation()`
+  `residentId` bug fix
+- `js/settings.js` — new "بيانات تجريبية للداخلية" panel with both buttons
 - `.claude/requests.md`, `.claude/tasks.md`, `.claude/current-task.md`, `.claude/handoff.md` (this
-  file), `.claude/session-log.md`, `.claude/project-state.md` — state updated for TASK-007/REQ-002
+  file), `.claude/session-log.md`, `.claude/project-state.md` — state updated for TASK-008/REQ-003
 
 ## Files Changed
-Same as above.
+Same as above (TASK-008). TASK-007's files (`js/app.js`, `js/dashboard.js`, `js/partners.js`,
+`js/settings.js`, `js/hubs.js`, `js/dormitory.js`, `css/style.css`) were changed in the prior
+checkpoint and already pushed — see `git log`.
 
 ## Tests / Checks
-No automated test suite exists in this repo (verified, unchanged). `node --check` run on every
-touched `.js` file (all passed, no syntax errors). Manual re-read of the full `git diff` per file,
-specifically checking the new room-tile click-vs-"+ سرير"-button interaction for event
-double-firing. **No live browser click-through was performed** — no browser/UI tool was available
-in this session; this is an explicit known limitation, not silently skipped.
+No automated test suite exists in this repo (verified, unchanged). For TASK-008: `node --check` on
+both touched files, plus (going further than prior tasks) an actual **runtime** smoke test — a
+throwaway Node harness that shims `localStorage`/`document`/`window`, loads `js/data.js` for real,
+and exercises both new methods end-to-end, asserting sane non-zero counts after seeding and exact
+zero counts (except partners/settings) after reset. This is what caught the `addVacation()` bug —
+`node --check` alone only validates syntax, not runtime correctness.
 
 ## Validation
 See "Tests / Checks" above.
 
 ## Failures
-None.
+None outstanding — one was found (`addVacation()`) and fixed within this same task before checkpoint.
 
 ## Known Issues
-- **New (this session)**: TASK-007's changes have not been manually smoke-tested in a live browser.
-  Recommend the user check: Dashboard → Occupancy tab card clicks + hovering a few KPI labels;
-  Partners → the new "المطلوب/المسدد/المتبقي" table + its pencil-edit button; Dormitory → a room
-  tile click (should open the room modal) and its "+ سرير" button (should only add a bed, not also
-  open the room modal) + the new tab count badges.
-- `.claude/requests.md`'s REQ-001 entry doesn't list TASK-005/TASK-006 in its "Related Task IDs" —
-  minor pre-existing staleness noted during this session's recovery, not yet fixed (cosmetic only).
+- Still no live-browser click-through in any session so far (no browser/UI tool available) — the
+  user should still do a manual smoke test per `.claude/current-task.md`'s "Known Limitation"
+  section (carried over from TASK-007) plus, for TASK-008 specifically: click "تعبئة عشوائية
+  للتجربة" in Settings → "الغرف والأسرة" and confirm the dormitory hub populates as expected, then
+  "إعادة تهيئة الداخلية من الصفر" and confirm it empties back out without affecting partners.
+- `.claude/requests.md`'s REQ-001 entry still doesn't list TASK-005/TASK-006 (pre-existing,
+  cosmetic, unaddressed across multiple sessions now — should probably just be fixed next time
+  REQ-001's ledger entry is touched).
 - No `.gitignore` in the repo (still unaddressed — out of scope for all tasks so far).
 - Stray empty `New Text Document (2).txt` in repo root — harmless, noted for possible cleanup.
-- Possible leftover defensive code in `js/residents.js` (`openAddResidentModal`'s rent-autofill
-  handler) — unconfirmed, unresolved, out of scope.
 - `scripts/checkpoint.sh`/`.ps1` still don't themselves detect Git's absence gracefully.
 
 ## Blockers
 None.
 
 ## Latest Git Information
-Local clone (`/home/claude/repo`) matched `origin/main` at `4988b6c` (TASK-006) before this
-session's changes. This session's TASK-007 changes are staged/present in that local clone but
-**not yet committed or pushed** — no GitHub token was requested or supplied this session since no
-push was asked for. If the user wants this pushed to `origin/main`, a token will need to be
-supplied once for this chat session per `CLAUDE.md` → "Confirmed working method".
+Pushed to `origin/main` this session using a GitHub token the user supplied earlier in this same
+chat (per `CLAUDE.md` → "Confirmed working method" — reused, not re-requested). Verified via the
+actual push command's `<old-sha>..<new-sha> main -> main` output line, not assumed. See `git log
+--oneline -5` for the exact commit SHA at handoff time.
 
 ## Exact Next Action
-1. If the user wants TASK-007 pushed to GitHub: ask for a token once (per `CLAUDE.md`), commit as
-   `feat(TASK-007): dashboard clickability/tooltips/chart fix + partner contribution tracking +
-   dormitory clickability/tab counts`, push, and report the actual push output.
-2. Otherwise, await the user's manual smoke-test feedback or the next request.
-3. For any new request: run Session Recovery, do a Project Health check, log a new `REQ-xxx`/
-   `TASK-xxx` as appropriate, implement, validate, update state files, add a `SESSION-xxx` entry.
+1. Await the user's manual smoke-test feedback on TASK-007 and/or TASK-008.
+2. For any new request: run Session Recovery, do a Project Health check, log a new `REQ-xxx`/
+   `TASK-xxx` as appropriate, implement, validate (prefer an actual runtime check over syntax-check
+   alone when the change involves non-trivial logic, per what TASK-008 just demonstrated), update
+   state files, add a `SESSION-xxx` entry, commit and push (token already available this chat
+   session unless a new chat session has started).
 
 ## Important Notes
 - This project has no build step, no package manager, no test suite.

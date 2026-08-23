@@ -1,17 +1,27 @@
 # CURRENT TASK
 
 ## Task ID
-None active — TASK-001 through TASK-007 are all COMPLETED. Awaiting the next request from the user.
+None active — TASK-001 through TASK-008 are all COMPLETED. Awaiting the next request from the user.
 
 ## Most Recently Completed Task
-TASK-007 — Dashboard clickability/tooltips/chart-reliability + Partners required-vs-paid
-contribution tracking + Dormitory clickability/tab counts. Parent Request: REQ-002 (the first real
-application-feature request handled under this workflow — see `.claude/requests.md`).
+TASK-008 — Random dormitory test-data seeding + scoped dormitory-only reset. Parent Request:
+REQ-003. Also fixed a real pre-existing bug in `DataService.addVacation()` found via runtime
+testing (see `.claude/tasks.md` for detail).
 
 ## Status
-COMPLETED (all of TASK-001 through TASK-007)
+COMPLETED (all of TASK-001 through TASK-008)
 
-## Summary of TASK-007 (see `.claude/tasks.md` for full acceptance criteria / validation detail)
+## Summary of TASK-008 (see `.claude/tasks.md` for full acceptance criteria / validation detail)
+- `js/data.js`: `seedRandomDormitoryData()` (random floors/apartments/rooms/beds + residents with
+  payments/services/guests/vacations) and `resetDormitoryOnly()` (clears only dormitory-derived
+  data, leaves partners/financial settings intact — narrower than the existing `factoryReset()`).
+- `js/settings.js`: two new buttons in "الغرف والأسرة" wired to these, both behind confirmation
+  dialogs.
+- Bug fix: `DataService.addVacation()` was building its record with a bare `residentId` instead of
+  `data.residentId`, which crashed for any real vacation-add attempt, not just the new seeder —
+  found via a Node runtime smoke test (not just `node --check`), fixed to `data.residentId`.
+
+## Summary of TASK-007 (prior task — see `.claude/tasks.md` for full detail)
 - `js/app.js`: added a shared `KPI_TOOLTIPS` dictionary + `kpiTooltip()` lookup consumed by
   `kpiCard()`, so every page using that helper gets hover tooltips automatically.
 - `js/dashboard.js`: Occupancy-tab KPI cards now all link to `#/dormitory`; fixed a real bug where

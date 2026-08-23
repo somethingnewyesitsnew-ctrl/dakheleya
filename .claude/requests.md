@@ -116,3 +116,38 @@ figure), `js/settings.js` (required-contribution input on the add-partner form),
 (tab count badges, wired for the Dormitory hub), `js/dormitory.js` (room tiles now fully clickable),
 and `css/style.css` (tooltip affordance styling). No test suite exists; validated via `node --check`
 on every touched JS file and manual re-read of each diff — see `.claude/current-task.md`.
+
+---
+
+## REQ-003
+
+Date: See `git log` for the commit date of TASK-008.
+
+Original Request Summary: (Arabic, paraphrased) Add the ability to randomly fill the dormitory with
+test data, and the ability to reset the dormitory back to a clean slate — a testing/demo workflow
+distinct from the existing full "تصفير النظام" (factory reset), which already wipes everything
+including partners and financial settings.
+
+Objective: Give the user a fast way to populate a realistic-looking dormitory (floors → apartments
+→ rooms → beds → residents, with payments, services, guests, and vacations) for UI testing/demos,
+and a scoped reset that clears only that dormitory data (not partners or general financial
+settings) so the cycle can be repeated.
+
+Status: COMPLETED
+
+Related Task IDs: TASK-008
+
+Completed Tasks:
+- TASK-008 — see `.claude/tasks.md` for full detail, including a real pre-existing bug found and
+  fixed along the way (`DataService.addVacation()` referenced a bare `residentId` instead of
+  `data.residentId`, which would have thrown for any real user trying to add a vacation, not just
+  this new seeder).
+
+Current Task: None — TASK-008 completed in the same session it was requested.
+
+Remaining Tasks: None queued for this REQ.
+
+Final Outcome: Added `DataService.seedRandomDormitoryData()` and `DataService.resetDormitoryOnly()`
+in `js/data.js`, wired to two new buttons in Settings → "الغرف والأسرة" (`js/settings.js`). Fixed
+`DataService.addVacation()`'s `residentId` reference bug in the process (discovered via a Node-based
+runtime smoke test, not just `node --check` syntax validation — see TASK-008 for the harness used).

@@ -307,6 +307,65 @@ would be extending the required/paid/surplus pattern to the Dashboard's own part
 
 ---
 
+## TASK-008
+Parent Request: REQ-003
+Title: Random dormitory test-data seeding + scoped dormitory-only reset
+Status: COMPLETED
+Priority: Normal (testing/demo tooling)
+Description: Added two new `DataService` methods and wired them into Settings → "الغرف والأسرة":
+1. `seedRandomDormitoryData()` — generates 2–3 random floors, 2–3 apartments per floor (globally
+   unique numbers, e.g. "101", "102", "201"...), a bathroom per apartment, 3–5 rooms per apartment
+   with a random type/price (beds auto-created via the existing `addRoom()`), then occupies ~70% of
+   the resulting beds with randomly-generated residents (random Arabic names, phone numbers,
+   universities, home regions, parent info), gives ~60% of those residents a partial-or-full random
+   rent payment, marks some of the remaining beds as صيانة/محجوز for visual variety, seeds a small
+   services catalog (إنترنت/طعام/مكتبة) with random subscriptions, and adds a couple of random
+   guests and up to two vacations. Returns a summary object; logs one activity-log entry.
+2. `resetDormitoryOnly()` — clears floors/apartments/bathrooms/rooms/beds/residents/guests/
+   services/residentServices/vacations/transfers, plus any transactions whose type is `'إيراد'` and
+   whose category is one of the dormitory-derived revenue categories (housing, food/internet/
+   library/transport service income, guest hosting) — but leaves partners, capital/advance
+   transactions, expenses, assets, and general settings untouched. This is intentionally narrower
+   than the existing `factoryReset()` in the Settings "تصفير النظام" danger tab, which wipes
+   everything including partners.
+Both actions are gated behind `confirmAction()` and show a result toast; the settings page
+re-renders afterward so the "طوابق/غرف/أسرة" counters update immediately.
+Acceptance Criteria:
+- A "تعبئة عشوائية للتجربة" button in Settings → "الغرف والأسرة" populates a non-trivial random
+  dormitory structure + residents + guests + services + vacations in one click, without touching
+  `js/data.js`'s partners/settings storage keys.
+- A "إعادة تهيئة الداخلية من الصفر" button clears all of the above back to empty, confirmed via a
+  destructive-action confirmation dialog, while partners and financial settings remain intact.
+- Both actions are runtime-tested, not just syntax-checked (`node --check` alone would not have
+  caught the bug found below).
+- No pre-existing behavior changed outside what was needed for these two new features, except the
+  bug fix below (which was necessary — the seeder calls `addVacation()`, which crashed).
+Completed:
+- `js/data.js`: added `seedRandomDormitoryData()` and `resetDormitoryOnly()`.
+- `js/settings.js`: added a "بيانات تجريبية للداخلية" panel with both buttons, wired to
+  `confirmAction()` + `showToast()` + a re-render of the settings page.
+- **Bug fix (found via runtime testing, not present in the original request)**: `DataService.
+  addVacation()` built its returned record with a bare `residentId` identifier instead of
+  `data.residentId` — a real pre-existing bug that would throw `ReferenceError: residentId is not
+  defined` for *any* user trying to add a vacation from `js/residents.js`'s "تسجيل إجازة" flow, not
+  just this session's new seeder. Fixed to `residentId: data.residentId`.
+Validation:
+- `node --check` on `js/data.js` and `js/settings.js` — both passed.
+- **Runtime smoke test** (not just syntax-check): wrote a small Node harness
+  (`/tmp/test_seed.js`, not committed to the repo — scratch-only) that shims `localStorage`/
+  `document`/`window`, loads `js/data.js` for real, and calls `seedRandomDormitoryData()` followed
+  by `resetDormitoryOnly()`, asserting via console output that: a non-zero, sane number of floors/
+  apartments/rooms/beds/residents/guests/services/vacations/transactions were created; partners and
+  `bedPrice` settings were untouched; and after reset every dormitory collection is back to zero
+  while partners/settings remain. This is what caught the `addVacation()` bug — `node --check` alone
+  would have missed it since it's a valid-syntax runtime `ReferenceError`. Re-ran the harness 5 more
+  times after the fix (random data means different counts each run) with no further exceptions.
+Checkpoint: TASK-008 (this entry)
+Next: Await user feedback. Not requested/not started: no equivalent "random fill" exists for the
+Partnership or Finance domains — only Dormitory, per what was explicitly asked.
+
+---
+
 <!--
   Add new tasks below using the same format. Keep them small enough that another Claude session
   could pick one up cold and finish it using only the repository + this file + current-task.md +

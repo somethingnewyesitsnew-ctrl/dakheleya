@@ -916,7 +916,7 @@ const DataService = {
         const percentage = keepBed ? (Number(data.percentage) || 50) : 0;
         const fee = keepBed ? this.calcVacationFee(data.residentId, percentage) : 0;
         const record = {
-            id: Utils.uid('vac'), residentId, residentName: resident.name,
+            id: Utils.uid('vac'), residentId: data.residentId, residentName: resident.name,
             startDate: data.startDate || Utils.todayISO(), expectedReturn: data.expectedReturn,
             actualReturn: '', keepBed, percentage, fee,
             paymentStatus: keepBed ? 'مستحق' : 'معفى',
@@ -1474,6 +1474,173 @@ const DataService = {
         StorageService.set(STORAGE_KEYS.activities, []);
         StorageService.set(STORAGE_KEYS.closings, []);
         StorageService.set(STORAGE_KEYS.meta, { seeded: true, factory: true, seedDate: new Date().toISOString(), version: 4 });
+    },
+
+    /* ---------------------- تعبئة عشوائية للداخلية (بيانات تجريبية) ---------------------- */
+    // يولّد هيكل داخلية عشوائي كامل (طوابق ← شقق ← غرف ← أسرة) ويسكّن جزءاً من الأسرة بطالبات
+    // وهميات (بأسماء وأرقام هاتف وجامعات عشوائية)، مع خدمات وضيفات وإجازات تجريبية —
+    // مخصص للتجربة فقط، ولا يمس الشركاء أو الإعدادات المالية العامة.
+    seedRandomDormitoryData() {
+        const user = Utils.currentUserName();
+        const settings = this.getSettings();
+        const basePrice = Number(settings.bedPrice) || 400000;
+
+        const FIRST_NAMES = ['فاطمة','مريم','آمنة','سارة','هبة','ندى','رنا','ياسمين','ريم','أميرة','سلمى','دانة','لينا','جميلة','خلود','منى','إيمان','عبير','هالة','نور','آية','رغد'];
+        const LAST_NAMES = ['أحمد','محمد','عبدالله','إبراهيم','الطيب','حسن','عثمان','بابكر','آدم','الأمين','الفاتح','موسى','خليل'];
+        const UNIVERSITIES = ['جامعة الخرطوم','جامعة السودان للعلوم والتكنولوجيا','جامعة أفريقيا العالمية','جامعة النيلين','جامعة أمدرمان الإسلامية','جامعة بحري'];
+        const REGIONS = ['أمدرمان','بحري','ود مدني','الأبيض','كسلا','بورتسودان','الفاشر','الدمازين','عطبرة','الجزيرة'];
+        const ROOM_TYPES = ['مفردة','مزدوجة','ثلاثية','رباعية'];
+        const ROOM_CAPACITY = { 'مفردة': 1, 'مزدوجة': 2, 'ثلاثية': 3, 'رباعية': 4 };
+        const FLOOR_NAMES = ['الأول', 'الثاني', 'الثالث', 'الرابع'];
+
+        const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+        const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+        const randPhone = () => '09' + String(rand(10000000, 99999999));
+
+        const floorsCount = rand(2, 3);
+        let createdBeds = [];
+        let apartmentsCount = 0, roomsCount = 0;
+
+        for (let f = 1; f <= floorsCount; f++) {
+            const floor = this.addFloor({ name: `الطابق ${FLOOR_NAMES[f-1] || f}`, order: f, description: 'تم إنشاؤه تلقائياً كبيانات تجريبية' });
+            const aptsOnFloor = rand(2, 3);
+            for (let a = 1; a <= aptsOnFloor; a++) {
+                const aptNumber = `${f}${String(a).padStart(2, '0')}`;
+                const apartment = this.addApartment({ number: aptNumber, name: '', floorId: floor.id });
+                if (apartment.error) continue;
+                apartmentsCount++;
+                this.addBathroom({ name: 'حمام مشترك', apartmentId: apartment.id, type: 'حمام مشترك' });
+                const roomsOnApt = rand(3, 5);
+                for (let r = 1; r <= roomsOnApt; r++) {
+                    const roomType = pick(ROOM_TYPES);
+                    const price = Math.max(basePrice + rand(-50000, 100000), 50000);
+                    const room = this.addRoom({
+                        number: `${aptNumber}-${r}`, apartmentId: apartment.id,
+                        roomType, capacity: ROOM_CAPACITY[roomType], price
+                    });
+                    roomsCount++;
+                    createdBeds.push(...this.getBedsByRoom(room.id));
+                }
+            }
+        }
+
+        // نسكّن حوالي 70% من الأسرة بطالبات وهميات، والباقي يتوزع بين متاح/صيانة/محجوز
+        const shuffled = [...createdBeds].sort(() => Math.random() - 0.5);
+        const occupyCount = Math.round(shuffled.length * 0.7);
+        let residentsCreated = 0;
+
+        for (let i = 0; i < occupyCount; i++) {
+            const bed = shuffled[i];
+            const room = this.getRoom(bed.roomId);
+            const resident = this.addResident({
+                name: `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`,
+                phone: randPhone(),
+                university: pick(UNIVERSITIES),
+                homeRegion: pick(REGIONS),
+                fatherName: `${pick(LAST_NAMES)} ${pick(LAST_NAMES)}`,
+                fatherPhone: randPhone(),
+                fatherJob: pick(['تاجر','موظف حكومي','مزارع','معلم','متقاعد','عسكري']),
+                motherName: pick(FIRST_NAMES),
+                motherPhone: randPhone(),
+                motherJob: pick(['ربة منزل','معلمة','موظفة','طبيبة']),
+                roomId: room.id, roomNumber: room.number, bedId: bed.id, bedNumber: bed.number,
+                checkIn: Utils.todayISO(), monthlyRent: room.price || basePrice,
+                paymentStatus: 'مستحق', notes: 'بيانات تجريبية (تم توليدها تلقائياً)'
+            });
+            residentsCreated++;
+            // نسبة عشوائية من الطالبات تكون دفعت جزءاً أو كل المستحق
+            if (Math.random() < 0.6) {
+                const full = Math.random() < 0.7;
+                const amount = full ? resident.monthlyRent : Math.max(Math.round(resident.monthlyRent * (rand(30, 80) / 100)), 1);
+                this.addResidentPayment(resident.id, { amount, method: pick(['نقدي','تحويل بنكي']) });
+            }
+        }
+
+        // نضيف تنوّعاً للأسرة المتبقية: بعضها صيانة أو محجوز، والباقي يفضل متاح
+        shuffled.slice(occupyCount).forEach(bed => {
+            const roll = Math.random();
+            if (roll < 0.15) this.updateBedStatus(bed.id, 'صيانة', 'حالة تجريبية');
+            else if (roll < 0.28) this.updateBedStatus(bed.id, 'محجوز', 'حالة تجريبية');
+        });
+
+        // خدمات تجريبية + اشتراكات عشوائية لبعض الطالبات
+        const serviceDefs = [
+            { name: 'اشتراك الإنترنت الشهري', type: 'الإنترنت', billingCycle: 'شهري', price: 15000 },
+            { name: 'وجبات يومية', type: 'الطعام', billingCycle: 'شهري', price: 60000 },
+            { name: 'اشتراك المكتبة', type: 'المكتبة', billingCycle: 'شهري', price: 8000 }
+        ];
+        const services = serviceDefs.map(s => this.addService(s));
+        const activeResidents = this.getResidents().filter(r => !r.checkOut);
+        activeResidents.forEach(r => {
+            services.forEach(s => { if (Math.random() < 0.35) this.assignResidentService(r.id, s.id, { price: s.price }); });
+        });
+
+        // ضيفات تجريبية
+        let guestsCreated = 0;
+        const guestCount = Math.min(rand(1, 3), activeResidents.length);
+        for (let i = 0; i < guestCount; i++) {
+            const host = pick(activeResidents);
+            const checkOutDate = new Date();
+            checkOutDate.setDate(checkOutDate.getDate() + rand(1, 5));
+            this.addGuest({
+                name: `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`, hostResidentId: host.id, phone: randPhone(),
+                checkIn: Utils.todayISO(), checkOut: checkOutDate.toISOString().slice(0, 10), dailyRate: 50000
+            });
+            guestsCreated++;
+        }
+
+        // إجازات تجريبية
+        let vacationsCreated = 0;
+        const vacationCount = Math.min(rand(0, 2), activeResidents.length);
+        for (let i = 0; i < vacationCount; i++) {
+            const r = pick(activeResidents);
+            const returnDate = new Date();
+            returnDate.setDate(returnDate.getDate() + rand(3, 14));
+            this.addVacation({
+                residentId: r.id, startDate: Utils.todayISO(), expectedReturn: returnDate.toISOString().slice(0, 10),
+                keepBed: Math.random() < 0.5, percentage: 50
+            });
+            vacationsCreated++;
+        }
+
+        const summary = {
+            floors: floorsCount, apartments: apartmentsCount, rooms: roomsCount, beds: createdBeds.length,
+            residents: residentsCreated, guests: guestsCreated, vacations: vacationsCreated
+        };
+        this.addActivity({
+            user, action: 'ولّد بيانات داخلية عشوائية للتجربة',
+            entity: `${summary.floors} طابق، ${summary.apartments} شقة، ${summary.rooms} غرفة، ${summary.residents} طالبة`
+        });
+        return summary;
+    },
+
+    // إعادة تهيئة الداخلية فقط من الصفر: يمسح الطوابق/الشقق/الغرف/الأسرة/الطالبات/الضيفات/الخدمات/
+    // الإجازات/تغييرات التسكين، وأي إيرادات ناتجة عنها — دون المساس بالشركاء أو إعدادات المالية العامة
+    // أو المصروفات أو الأصول. مخصص لإعادة الاختبار من جديد بعد "تعبئة عشوائية للتجربة".
+    resetDormitoryOnly() {
+        const user = Utils.currentUserName();
+        const DORM_REVENUE_CATEGORIES = ['إيراد سكن وإعاشة', 'إيراد خدمة الطعام', 'إيراد خدمة الإنترنت', 'إيراد المكتبة', 'إيراد الترحيل', 'إيراد استضافة'];
+
+        StorageService.set(STORAGE_KEYS.floors, []);
+        StorageService.set(STORAGE_KEYS.apartments, []);
+        StorageService.set(STORAGE_KEYS.bathrooms, []);
+        StorageService.set(STORAGE_KEYS.rooms, []);
+        StorageService.set(STORAGE_KEYS.beds, []);
+        StorageService.set(STORAGE_KEYS.roomTypes, []); // أنواع الغرف المخصصة فقط — الأنواع الافتراضية ثابتة في الكود
+        StorageService.set(STORAGE_KEYS.residents, []);
+        StorageService.set(STORAGE_KEYS.guests, []);
+        StorageService.set(STORAGE_KEYS.services, []);
+        StorageService.set(STORAGE_KEYS.residentServices, []);
+        StorageService.set(STORAGE_KEYS.vacations, []);
+        StorageService.set(STORAGE_KEYS.transfers, []);
+
+        // إزالة إيرادات الداخلية المرتبطة بالطالبات/الضيفات/الخدمات فقط (تبقى أي معاملات أخرى — رأس مال، سلف، مصروفات... — كما هي)
+        const remainingTransactions = (StorageService.get(STORAGE_KEYS.transactions) || [])
+            .filter(t => !(t.type === 'إيراد' && DORM_REVENUE_CATEGORIES.includes(t.category)));
+        StorageService.set(STORAGE_KEYS.transactions, remainingTransactions);
+
+        this.saveSettings({ roomsCount: 0, bedsCount: 0 });
+        this.addActivity({ user, action: 'أعاد تهيئة الداخلية بالكامل من الصفر', entity: 'دون التأثير على الشركاء أو الإعدادات المالية العامة' });
     }
 };
 

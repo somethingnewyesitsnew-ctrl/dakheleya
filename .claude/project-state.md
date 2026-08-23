@@ -37,12 +37,14 @@ Overall Status: Healthy. App is functional. Workflow/feature history:
 - TASK-005: documented the confirmed browser-session GitHub push method (DECISION-004).
 - TASK-006: vendored the `persistent-git-workflow` skill source into `.claude/skills/`.
 - TASK-007 (REQ-002): first application-feature request — see `.claude/tasks.md` for full detail.
-  Implemented in a local clone this session; **not yet committed/pushed** (no push requested this
-  session) — see `.claude/handoff.md` → "Latest Git Information".
+  Implemented and pushed to `origin/main` (`c030d90`).
+- TASK-008 (REQ-003): added random dormitory test-data seeding + a scoped dormitory-only reset
+  (`js/data.js`, `js/settings.js`); found and fixed a real pre-existing bug in
+  `DataService.addVacation()` (bare `residentId` instead of `data.residentId`) via runtime testing.
 
-Active Task: None — TASK-001 through TASK-007 all COMPLETED. Awaiting the user's manual smoke-test
-feedback on TASK-007, or the next request (see `.claude/requests.md` for REQ-002's status and
-`.claude/tasks.md` for the task queue).
+Active Task: None — TASK-001 through TASK-008 all COMPLETED. Awaiting the user's manual smoke-test
+feedback, or the next request (see `.claude/requests.md` for REQ-003's status and `.claude/tasks.md`
+for the task queue).
 
 Environment Note: This project may be accessed either via a local Claude Code checkout with Git CLI,
 or via a browser-based Claude Project connected to GitHub without a local `.git` directory.
