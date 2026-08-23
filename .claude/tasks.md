@@ -203,6 +203,35 @@ without re-litigating whether it's possible.
 
 ---
 
+## TASK-006
+Parent Request: REQ-001
+Title: Vendor the persistent-git-workflow skill source into the repo
+Status: COMPLETED
+Priority: Medium
+Description: Store the source of the `persistent-git-workflow` Claude skill (built this session,
+generalizing this repo's own CLAUDE.md/.claude workflow + the confirmed browser-session git push
+method into a reusable, installable skill) inside this repo at
+`.claude/skills/persistent-git-workflow/`, so it's versioned in Git history rather than existing
+only as a downloaded `.skill` file outside the repo. Includes `SKILL.md`,
+`references/CLAUDE.md.template`, `references/claude-dir-templates/*`, and `scripts/scaffold.py`
+(tested this session: fresh install + overwrite-safety guard both verified working before this
+task, and a template bug — placeholder values gluing to their inline example hints — was found and
+fixed as part of that testing).
+Acceptance Criteria:
+- `.claude/skills/persistent-git-workflow/` exists in the repo with the full skill source.
+- No application code touched.
+- Work committed and pushed to `origin/main`, verified via push output.
+Completed:
+- Copied the built-and-tested skill source into `.claude/skills/persistent-git-workflow/`.
+- This task entry added.
+Validation:
+- Skill was already tested earlier this session (fresh install + re-run-refuses-overwrite, both
+  verified via actual script output) before this task copied it into the repo.
+Checkpoint: TASK-006 (this entry)
+Next: Await the next user request.
+
+---
+
 <!--
   Add new tasks below using the same format. Keep them small enough that another Claude session
   could pick one up cold and finish it using only the repository + this file + current-task.md +

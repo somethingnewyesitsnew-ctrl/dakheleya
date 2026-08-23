@@ -1,14 +1,14 @@
 # CURRENT TASK
 
 ## Task ID
-None active — TASK-001 through TASK-005 are all COMPLETED. Awaiting the next request from the user.
+None active — TASK-001 through TASK-006 are all COMPLETED. Awaiting the next request from the user.
 
 ## Most Recently Completed Task
-TASK-005 — Document and standardize the confirmed browser-session git push method (session token,
-asked once per chat, DECISION-004). Parent Request: REQ-001.
+TASK-006 — Vendor the `persistent-git-workflow` skill source into the repo at
+`.claude/skills/persistent-git-workflow/`. Parent Request: REQ-001.
 
 ## Status
-COMPLETED (all of TASK-001 through TASK-005)
+COMPLETED (all of TASK-001 through TASK-006)
 
 ## Summary of completed tasks
 

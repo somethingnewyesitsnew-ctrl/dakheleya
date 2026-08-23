@@ -1,0 +1,267 @@
+# CLAUDE.md — Project Workflow ({{PROJECT_NAME}})
+
+This file establishes a persistent, interruption-safe development workflow.
+
+> If a Claude session stops unexpectedly at any moment, another Claude session must be able to
+> enter this repository and continue the work without needing the previous conversation.
+>
+> The repository and Git history are the source of truth when Git is available. When Git is not
+> available, the `.claude/` state files are the source of truth. Do not depend on conversation
+> memory in either case.
+
+---
+
+## Browser Project / Git Availability
+
+This project may run inside a browser-based Claude.ai chat (files provided via a connected GitHub
+repository or pasted directly) rather than a local Claude Code terminal. In that environment there
+may be no local `.git` directory by default.
+
+**Do not assume Git CLI is available or unavailable — check.** At the start of a session:
+```bash
+which git && git --version
+```
+
+### Confirmed working method: committing/pushing from a Claude.ai browser session
+
+Claude.ai chat sessions with the code-execution/bash tool enabled run inside a sandboxed container
+that typically has `git` installed and network egress allowed to `github.com` / `api.github.com` /
+`codeload.github.com`. This means Claude can clone this repo, make changes, commit, and push —
+even though the browser chat interface itself has no persistent local checkout and no stored
+GitHub credential.
+
+Procedure, once per chat session that needs to push:
+
+1. Verify: `which git`, `curl -sI https://api.github.com` (a 403 is fine — confirms reachability).
+2. Ask the user for a GitHub token **once**, at the point a push is first needed. Recommend a
+   fine-grained Personal Access Token scoped to only this repo, `Contents: Read & Write`, short
+   expiry.
+3. Clone: `git clone https://<TOKEN>@github.com/<owner>/<repo>.git`
+4. Do the work inside that clone.
+5. Commit with a `feat(TASK-xxx): ...` / `checkpoint(TASK-xxx): ...` / `fix(BUG-xxx): ...` message.
+6. Push, masking the token in any output shown to the user:
+   `git push origin <branch> 2>&1 | sed "s/<TOKEN>/***TOKEN***/g"`
+   Only report success if the actual `<old-sha>..<new-sha> branch -> branch` line appears.
+7. Reuse the same token for the rest of that chat session — don't re-ask per commit. Do ask again
+   in a new chat session.
+8. Afterward, strip the token from the local remote (`git remote set-url origin
+   https://github.com/<owner>/<repo>.git`) and tell the user once that the pasted token is now in
+   the chat transcript and should be treated as no longer secret — recommend revoking/rotating it.
+
+This does not contradict "never persist a token" below — it never gets written to a tracked file,
+a commit, or `.claude/*`; it only exists transiently in that session's sandbox process/environment.
+
+**If Git CLI or the sandbox is unavailable:**
+- Do not claim the project files are missing — they may still be available via a Claude.ai Project
+  synced from GitHub (read-only) or pasted directly.
+- Do not fabricate Git status, commit SHAs, branch names, or push results.
+- Treat `.claude/*` as the persistent, authoritative session state instead of Git history.
+- State plainly that Git operations cannot be performed in this environment.
+
+---
+
+## Project Facts (fill in and keep verified — do not invent)
+
+<!-- PROJECT_TYPE examples: static client-side web app / API service / CLI tool / library -->
+<!-- PERSISTENCE examples: localStorage / Postgres via an ORM / none -->
+<!-- COMMANDS: if none exist in this repo, write that literally — never invent a command -->
+
+- **Name:** {{PROJECT_NAME}}
+- **Type:** {{PROJECT_TYPE}}
+- **Entry point:** {{ENTRY_POINT}}
+- **Stack:** {{STACK}}
+- **Persistence:** {{PERSISTENCE}}
+- **File layout:** {{FILE_LAYOUT}}
+- **Test/build/lint commands:** {{COMMANDS}}
+
+---
+
+## Mandatory Startup Procedure
+
+Before starting any task, in this order:
+
+1. Read `CLAUDE.md` (this file).
+2. Read `.claude/project-state.md`.
+3. Read `.claude/requests.md`.
+4. Read `.claude/tasks.md`.
+5. Read `.claude/current-task.md`.
+6. Read `.claude/handoff.md`.
+7. Read `.claude/session-log.md`.
+8. Read `.claude/decisions.md` when architectural decisions are relevant.
+9. Check Git CLI availability (see above). If available: `git status --short`, `git log --oneline
+   -10`, and inspect remote divergence when possible. If unavailable: rely on `.claude/*` alone.
+10. Inspect the current task and relevant existing code.
+11. Perform a lightweight Project Health check (see below).
+
+Then report using the `PROJECT RECOVERY` format below. Do not ask the user to explain previous
+work if the repository or `.claude/*` state files already contain enough information.
+
+---
+
+## Task System
+
+Every meaningful unit of work has a unique ID: `TASK-001`, `TASK-002`, ... Bugs use `BUG-001`, ...
+Large requests get a `REQ-0NN` entry in `.claude/requests.md` first, broken into dotted sub-tasks
+(`TASK-0NN.1`, `TASK-0NN.2`, ...) in `.claude/tasks.md`, each with explicit acceptance criteria.
+Small requests (one clear bug fix, a one-line change) just get a single task — use judgment.
+
+```text
+USER REQUEST → TASKS → CHECKPOINTS → FINAL RESULT
+```
+
+### Task Lifecycle
+`PENDING → IN_PROGRESS → CHECKPOINT → IN_PROGRESS → COMPLETED` (or `BLOCKED`).
+
+A task is COMPLETED only when: implementation exists, relevant validation was performed (or its
+absence is explicitly stated), known problems are documented, all state files are updated, and
+work is committed **if Git is available** (state the plain fact if it isn't). Never claim a commit
+or push occurred if it did not.
+
+---
+
+## Checkpoint System
+
+Checkpoint: before risky changes, after meaningful milestones, after bug fixes, before handing off,
+when asked, near a usage limit, before ending a long task. A checkpoint updates `current-task.md`,
+`project-state.md`, and `handoff.md` regardless of Git availability, and commits when Git is
+available. Do this after every meaningful milestone — not only once an entire multi-part request
+is finished.
+
+### Protect completed work
+Before starting a new milestone, verify the previous one's work actually exists (don't just trust
+its status label). If a COMPLETED milestone is actually missing/broken: report it, create a
+`BUG-xxx`, fix before depending on it.
+
+---
+
+## Session Recovery (Project Recovery Protocol)
+
+Applies to any new session (or account) opening this project. Run this before asking the user
+anything. Report:
+
+```text
+PROJECT RECOVERY
+
+Active Request:
+Active Task:
+Current Status:
+Completed:
+Last Checkpoint:
+Current Work:
+Remaining:
+Exact Next Action:
+Git Status: (verified info, or "UNAVAILABLE IN CURRENT ENVIRONMENT")
+State Consistency: (CONSISTENT, or the contradiction found)
+```
+
+### If state files contradict each other
+**Stop.** Name the specific inconsistency. Resolve using the most recent verified evidence (Git
+history is usually the strongest signal). Correct the state files. Report the resolution.
+
+### The "continue" command
+Run Session Recovery automatically. Don't start a new task, don't redo completed work — continue
+from the exact "Exact Next Action" in `handoff.md`.
+
+---
+
+## Cross-Account Continuation
+
+Never assume this session is the only active one. Before modifying anything: inspect `.claude/*`
+and recent Git history, detect another session's changes, preserve valid work. If remote Git has
+diverged: `git fetch`, compare, understand what changed on each side, merge semantically (never
+force-push, never discard valid work), validate the merged result before committing.
+
+---
+
+## Project Health
+
+At recovery and before major work, check what's actually applicable to this project (don't invent
+checks for tooling that doesn't exist here):
+- `.claude/*` present and internally consistent
+- application structure matches what's documented
+- obvious broken references (routes with no handler, imports of missing files)
+- Git state, if available
+
+```text
+PROJECT HEALTH
+
+State: HEALTHY / WARNING / BLOCKED
+Issues:
+Recommended action:
+```
+
+---
+
+## Authentication / Secrets
+
+Never: request a token unnecessarily; ask for one more than once per chat session; write tokens to
+any tracked file (including `CLAUDE.md`/`.claude/*`); commit credentials; print a credential in the
+clear after its initial paste (mask it in subsequent output); include credentials in task/request
+descriptions or the session log.
+
+If auth is already available in the environment, use it normally. If unavailable, continue work
+that doesn't need it and clearly report the limitation.
+
+---
+
+## Application Safety
+
+Modify only what the current task requires. Avoid unrelated refactoring. Preserve existing
+behavior unless the task explicitly changes it. Don't introduce a build step, package manager, or
+framework without an explicit task/decision requiring it (record the decision first).
+
+---
+
+## Git Workflow
+
+Applies only when Git CLI is available. Small, meaningful commits:
+```text
+feat(TASK-001): implement user management
+fix(BUG-001): fix authentication redirect
+checkpoint(TASK-001): save project state
+docs: update project state
+```
+Never claim a push succeeded unless the command's actual output confirms it. Never force-push
+unless explicitly authorized.
+
+---
+
+## Validation
+
+State plainly what this project actually has (test suite? linter? build?) and validate accordingly.
+If none exist, validation means manually exercising the changed feature and confirming expected
+behavior — never claim "tests passed" if there are no tests.
+
+---
+
+## Final Task Checkpoint Report
+
+At the end of every completed task, report:
+
+```text
+TASK CHECKPOINT
+
+REQUEST:
+TASK:
+STATUS:
+
+COMPLETED:
+CURRENT WORK:
+FILES CHANGED:
+VALIDATION:
+KNOWN ISSUES:
+BLOCKERS:
+LAST CHECKPOINT:
+NEXT TASK:
+NEXT ACTION:
+
+PERSISTENT STATE:
+- project-state.md updated
+- current-task.md updated
+- handoff.md updated
+- tasks.md updated
+- requests.md updated (if part of a tracked REQ-xxx)
+- session-log.md updated with this session's entry
+```
+
+If Git CLI is unavailable, say so explicitly rather than inventing a commit SHA.
