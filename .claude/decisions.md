@@ -131,3 +131,47 @@ worked on by different accounts.
 - Any future divergence with a remote/another session must be merged semantically, never force-pushed
   or blindly overwritten — this repository has already needed that once and is expected to again as
   multiple sessions/accounts continue to touch it.
+
+---
+
+## DECISION-004 — Confirm and standardize the browser-session git push method (session token, asked once per chat)
+
+Date: See commit history (TASK-005 commit)
+
+Status: Accepted
+
+### Decision
+Formally document, in `CLAUDE.md`, that a Claude.ai browser chat session with the code-execution
+sandbox enabled has a real, working `git` binary and network access to `github.com` /
+`api.github.com` / `codeload.github.com`, and can therefore clone this repo, commit, and push
+directly — using a GitHub Personal Access Token supplied by the user **once per chat session**,
+used only transiently inside that session's sandbox, and never written to any tracked file or
+`.claude/*` entry.
+
+### Why
+An earlier part of this same session initially told the user this was not possible from browser
+chat, based on a (correct, but incomplete) description of the read-only Projects↔GitHub sync
+connector. The user correctly pointed out this contradicted prior real experience in this same
+project, where a past session did exactly this — clone/commit/push with a session-supplied token.
+Verifying the sandbox directly confirmed `git` is installed and `api.github.com` is reachable, and a
+real clone of this repo succeeded and matched the commit history already recorded in
+`session-log.md`. The workflow docs were previously vague about this ("Authentication/Secrets"
+implied token-based pushing might not be available); this decision makes it an explicit, confirmed,
+repeatable procedure instead of something each session has to rediscover or (worse) get wrong in
+either direction — either wrongly claiming it's impossible, or wrongly re-asking for a token on
+every single commit within one session.
+
+### Alternatives Considered
+- Asking for a fresh token on every commit within a session. Rejected: unnecessary friction: the
+  token is only ever live in that session's ephemeral sandbox anyway, so reusing it for the
+  session's duration doesn't increase exposure beyond the initial paste.
+- Leaving the method undocumented / conversation-only. Rejected: violates this project's own
+  "never depend on conversation memory" principle (DECISION-001) — a future session would otherwise
+  repeat the same back-and-forth confusion this session just had.
+
+### Consequences
+- Future sessions should ask for a GitHub token once per chat when a push is first needed, reuse it
+  for that session's subsequent commits, and explicitly remind the user to revoke/rotate it at the
+  end of the session (since pasting it into chat means it's no longer secret from that point on).
+- `CLAUDE.md`'s "Browser Project / Git Availability" and "Authentication / Secrets" sections were
+  updated to reflect this as a confirmed capability, not a limitation.

@@ -1,15 +1,14 @@
 # CURRENT TASK
 
 ## Task ID
-None active — TASK-001, TASK-002, TASK-003, and TASK-004 are all COMPLETED. Awaiting the next
-request from the user.
+None active — TASK-001 through TASK-005 are all COMPLETED. Awaiting the next request from the user.
 
 ## Most Recently Completed Task
-TASK-004 — Finalize universal cross-session project continuity (request ledger, session log,
-session recovery/health-check formalization). Parent Request: REQ-001.
+TASK-005 — Document and standardize the confirmed browser-session git push method (session token,
+asked once per chat, DECISION-004). Parent Request: REQ-001.
 
 ## Status
-COMPLETED (all of TASK-001 through TASK-004)
+COMPLETED (all of TASK-001 through TASK-005)
 
 ## Summary of completed tasks
 
@@ -61,12 +60,20 @@ either — see `.claude/session-log.md` SESSION-003 for the full detail.
 - No application/business code (`index.html`, `css/`, `js/`) modified. No existing workflow file or
   instruction deleted — everything was additive or reorganized without loss of content.
 
+### TASK-005 — Confirmed browser-session git push method
+Verified the Claude.ai browser sandbox has a working `git` binary and network access to
+`github.com`/`api.github.com`; cloned this repo using a user-supplied token; documented the
+procedure (ask once per chat session, reuse for that session, mask the token in output, remind the
+user to revoke it afterward) in `CLAUDE.md`'s "Browser Project / Git Availability" and
+"Authentication / Secrets" sections; recorded `DECISION-004`. This corrects an earlier, incomplete
+answer given mid-session that wrongly implied browser chat could never push to GitHub at all.
+
 ## Current Work
 None.
 
 ## Remaining Work
-None for TASK-001–004. The next real request should be logged as `REQ-002` (if substantial, with
-its own task breakdown) or a standalone `TASK-005`/`BUG-001` (if small) — see `.claude/requests.md`
+None for TASK-001–005. The next real request should be logged as `REQ-002` (if substantial, with
+its own task breakdown) or a standalone `TASK-006`/`BUG-001` (if small) — see `.claude/requests.md`
 and `CLAUDE.md` → "User Request → Task Plan" for which applies.
 
 ## Changed Files (TASK-004 only)

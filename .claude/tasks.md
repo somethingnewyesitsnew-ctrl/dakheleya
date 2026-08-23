@@ -165,6 +165,44 @@ Next: Await the next user request; assign it a new `REQ-xxx` if substantial.
 
 ---
 
+## TASK-005
+Parent Request: REQ-001
+Title: Document and standardize the confirmed browser-session git push method (session token, asked
+once per chat)
+Status: COMPLETED
+Priority: High (infrastructure / workflow)
+Description: Verify and formally document in `CLAUDE.md` that a Claude.ai browser chat session with
+the code-execution sandbox enabled can clone/commit/push to this repo directly, using a GitHub token
+supplied by the user once per chat session (not once per commit), used only transiently inside the
+sandbox and never persisted to any tracked file. Added a "Confirmed working method" subsection under
+"Browser Project / Git Availability" and updated "Authentication / Secrets" accordingly. Recorded as
+DECISION-004.
+Acceptance Criteria:
+- CLAUDE.md documents the exact procedure: ask once per session, clone with token, do the work,
+  commit, push, mask the token in all shown output, reuse for the rest of that session, remind the
+  user to revoke/rotate the token at session end.
+- No instruction anywhere claims a token should be re-requested on every commit within one session.
+- No instruction anywhere claims this capability doesn't exist (superseding the earlier, incomplete
+  answer given earlier in this same session's conversation).
+- Token itself never written to any tracked file, commit, or `.claude/*` entry.
+- `.claude/decisions.md` has DECISION-004 explaining the why or this change.
+- Work committed and pushed to `origin/main` using the session-supplied token, verified via the
+  push command's actual output.
+Completed:
+- Verified `git` + `api.github.com` reachability directly in the sandbox.
+- Cloned the repo with the user-supplied token; confirmed history matches `session-log.md`.
+- Updated `CLAUDE.md` (two sections) and added `DECISION-004`.
+- This task entry, `current-task.md`, `handoff.md`, `project-state.md`, `session-log.md` updated.
+Validation:
+- Manual: re-read both edited `CLAUDE.md` sections for internal consistency with the rest of the
+  document; confirmed no existing instruction was deleted, only extended.
+- Manual: confirmed `git clone` succeeded and matched known commit history before proceeding.
+Checkpoint: TASK-005 (this entry)
+Next: Await the next real feature/bug request; the next session should reuse this confirmed method
+without re-litigating whether it's possible.
+
+---
+
 <!--
   Add new tasks below using the same format. Keep them small enough that another Claude session
   could pick one up cold and finish it using only the repository + this file + current-task.md +

@@ -37,6 +37,40 @@ actually work before relying on them.
 only means Git-based inspection/commit/push are unavailable; the `.claude/` files and project files
 themselves are still the source of truth for continuing work.
 
+### Confirmed working method: committing/pushing from a Claude.ai browser session
+
+Claude.ai chat sessions with the code-execution/bash tool enabled run inside a sandboxed container
+that has `git` installed and network egress allowed to `github.com` / `api.github.com` /
+`codeload.github.com`. This means Claude **can** clone this repo, make changes, commit, and push —
+even though the browser chat interface itself has no persistent local checkout and no stored GitHub
+credential. This has been verified working (see `.claude/session-log.md` and `.claude/decisions.md`
+DECISION-004).
+
+The procedure, once per chat session that needs to push:
+
+1. **Ask the user for a GitHub token once, at the point a push is actually needed** — not before,
+   and not more than once per chat session. Prefer a fine-grained Personal Access Token scoped to
+   only this repo (`somethingnewyesitsnew-ctrl/dakheleya`), Contents: Read & Write, short expiry.
+2. Clone using the token: `git clone https://<TOKEN>@github.com/somethingnewyesitsnew-ctrl/dakheleya.git`
+   into the sandbox's working directory (e.g. `/home/claude/repo`).
+3. Do the task's work inside that clone.
+4. Commit with a proper `checkpoint(TASK-xxx): ...` / `feat(TASK-xxx): ...` message per "Git
+   Workflow" below.
+5. Push: `git push origin <branch>`.
+6. **Mask the token in every tool-call/log line shown back to the user** (e.g. pipe through
+   `sed 's/<TOKEN>/***TOKEN***/g'`) — never print it in the clear after the initial paste, and never
+   write it into any file that gets committed.
+7. Reuse the same token for the rest of that chat session (don't re-ask on every single commit) —
+   but **do ask again in a new chat session**, since the token only exists in that session's
+   sandbox and does not persist across sessions.
+8. At the end of the session, remind the user the token was pasted in plaintext into the chat
+   transcript and should be treated as no longer secret — recommend they revoke/rotate it once the
+   session's work is done.
+
+This does **not** contradict the "never persist a token" rule below — the token still never gets
+written to a tracked file, a commit, or `.claude/*`; it only ever exists transiently in the sandbox
+process/environment for that one session.
+
 ---
 
 ## Project Facts (verified from repository)
@@ -454,16 +488,21 @@ by the user.
 
 GitHub authentication is an environment concern, not something to embed in the project.
 
+**In a Claude.ai browser session with code execution enabled**, see "Confirmed working method"
+above — ask the user for a token **once per chat session**, right when a push is actually needed,
+use it only inside that session's sandbox, and never write it to a tracked file.
+
 Never:
 - request a token unnecessarily (only ask when a push is actually needed and Git is available)
+- ask for a token more than once in the same chat session — reuse the one already supplied
 - write tokens to any file, including `CLAUDE.md` or anything under `.claude/`
 - commit credentials
-- print credentials in a way that persists beyond what's operationally necessary
+- print credentials in the clear in tool output/logs after the initial paste — mask them
 - include credentials in task descriptions, the request ledger, or the session log
 
 If Git authentication is already available in the environment, use it normally. If authentication is
-unavailable, continue all work that does not require it and clearly report the limitation — do not
-block unrelated work on it.
+unavailable (no code-execution/bash tool, or no token supplied), continue all work that does not
+require it and clearly report the limitation — do not block unrelated work on it.
 
 **Never claim a push succeeded unless it actually succeeded** — always verify via the command's
 actual output (e.g. a `<old-sha>..<new-sha> branch -> branch` line), never assume.

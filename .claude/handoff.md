@@ -10,18 +10,18 @@ the full ledger entry. Currently IN_PROGRESS as a living system (each extension 
 no application-feature request is active.
 
 ## Session Status
-Complete — TASK-004 implemented (request ledger, session log, session-recovery/health-check
-formalization), on top of the already-completed TASK-001 (+ DECISION-002 extension), TASK-002, and
-TASK-003.
+Complete — TASK-005 implemented (confirmed + documented the browser-session git push method,
+DECISION-004), on top of the already-completed TASK-001 (+ DECISION-002 extension), TASK-002,
+TASK-003, and TASK-004.
 
 ## Active Task
 None — awaiting the next request from the user.
 
 ## Task Status
-COMPLETED (TASK-001, TASK-002, TASK-003, TASK-004)
+COMPLETED (TASK-001, TASK-002, TASK-003, TASK-004, TASK-005)
 
 ## Last Checkpoint
-TASK-004 — see `.claude/current-task.md` for full detail and `git log` for the commit SHA.
+TASK-005 — see `.claude/current-task.md` for full detail and `git log` for the commit SHA.
 
 ## Completed
 - **TASK-001** (+ DECISION-002): workflow scaffold + task planning/decomposition + first
