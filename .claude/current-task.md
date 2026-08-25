@@ -1,15 +1,29 @@
 # CURRENT TASK
 
 ## Task ID
-None active — TASK-001 through TASK-009 are all COMPLETED. Awaiting the next request from the user.
+None active — TASK-001 through TASK-010 are all COMPLETED. Awaiting the next request from the user.
 
 ## Most Recently Completed Task
-TASK-009 — Guarantee 100% occupancy + realistic operating expenses in the dormitory seeder. Parent
-Request: REQ-004. Also removed vacation seeding after runtime testing revealed it silently
-prevented a true 100% occupancy rate (see `.claude/tasks.md` for full detail).
+TASK-010 — Put the dormitory random-fill (seeder) fully under user control via an options modal.
+Parent Request: REQ-005. `seedRandomDormitoryData()` now takes an `options` object (structure
+ranges, occupancy %, payment %, per-feature toggles for guests/services/expenses, expense
+multiplier) instead of hardcoded ~100%-occupancy values, and Settings now opens a form/modal before
+running the seed instead of a fixed one-click action (see `.claude/tasks.md` for full detail).
 
 ## Status
-COMPLETED (all of TASK-001 through TASK-009)
+COMPLETED (all of TASK-001 through TASK-010)
+
+## Summary of TASK-010 (see `.claude/tasks.md` for full acceptance criteria / validation detail)
+- `js/data.js`: `seedRandomDormitoryData(options = {})` — every previously-hardcoded value is now
+  an option with a default matching the old behavior: `floorsMin/Max`, `aptsPerFloorMin/Max`,
+  `roomsPerAptMin/Max`, `occupancyPercent` (0–100, was always effectively 100), `paymentPercent`,
+  `fullPaymentPercent`, `generateGuests` + `guestsMin/Max`, `generateServices` +
+  `serviceSubscribePercent`, `generateExpenses` + `expensePercentMultiplier`. Occupied-bed count is
+  now `Math.round(totalBeds * occupancyPercent/100)` instead of always all beds. Summary object
+  gained `occupiedBeds`, `occupancyPercent`, `servicesAssigned`.
+- `js/settings.js`: new `openSeedOptionsModal(container)` — a form with all of the above (occupancy
+  as a live-updating range slider), only running the seed (behind the existing `confirmAction()`
+  dialog) after the user submits it. Replaced the old always-100% button/copy.
 
 ## Summary of TASK-009 (see `.claude/tasks.md` for full acceptance criteria / validation detail)
 - `js/data.js`: `seedRandomDormitoryData()` now occupies 100% of generated beds (was ~70%); no
@@ -108,21 +122,23 @@ user to revoke it afterward) in `CLAUDE.md`'s "Browser Project / Git Availabilit
 answer given mid-session that wrongly implied browser chat could never push to GitHub at all.
 
 ## Current Work
-None — TASK-009 completed in the same session it was requested.
+None — TASK-010 completed in the same session it was requested.
 
 ## Remaining Work
-None queued. Item #9 from the review that produced this request (a Partnership/Finance equivalent
-of the Dormitory seeder) was explicitly deferred by the user and remains out of scope. Also still
-not started: extend the required/paid/surplus contribution pattern to the Dashboard's own partner
-mini-cards (currently only the Partners page shows it in full) — unrelated pre-existing follow-up.
+None queued. Item #9 from an earlier review (a Partnership/Finance equivalent of the Dormitory
+seeder) was explicitly deferred by the user and remains out of scope. Also still not started:
+extend the required/paid/surplus contribution pattern to the Dashboard's own partner mini-cards
+(currently only the Partners page shows it in full) — unrelated pre-existing follow-up.
 
 ## Known Limitation From This Session
-No browser/UI tool was available in this session to click through the app live. Validation was
-`node --check` (syntax) on every touched file plus a manual re-read of each diff. The user should
-do a quick manual smoke test: Dashboard → Occupancy tab card clicks + hovering a few KPI labels;
-Partners → the new contribution table + its edit button; Dormitory → a room-tile click + the tab
-count badges (and confirm the "+ سرير" button on a room tile still only adds a bed, doesn't also
-open the room modal).
+No browser/UI tool was available in this session to click through the app live. Validation for
+TASK-010 was `node --check` plus a Node `vm`-based runtime harness exercising
+`seedRandomDormitoryData(options)` across four option combinations and 5 no-args backward-
+compatibility runs (see `.claude/tasks.md` TASK-010 for exact assertions). The user should do a
+quick manual smoke test: Settings → "الغرف والأسرة" → "تحكم وتعبئة عشوائية للتجربة" → confirm the
+form opens, the occupancy slider updates its live label, submitting it shows the confirmation
+dialog, and the resulting seed matches the chosen occupancy/structure/toggles (e.g. try 50%
+occupancy with services/guests/expenses all unchecked and confirm none of those get created).
 
 ## Changed Files (TASK-004 only)
 - `.claude/requests.md` (new)

@@ -435,6 +435,69 @@ of scope per this request.
 
 ---
 
+## TASK-010
+Parent Request: REQ-005
+Title: Put the dormitory random-fill (seeder) fully under user control via an options modal
+Status: COMPLETED
+Priority: Normal (testing/demo tooling improvement)
+Description: The user said the random seeder (`DataService.seedRandomDormitoryData()` from
+TASK-008/TASK-009) needed to be "under my control" instead of hardcoded ~100%-occupancy, fixed
+structure ranges. Reworked the method to accept an `options` object (with sane defaults matching
+the previous hardcoded behavior, so a no-args call is unchanged) covering: floors/apartments-per-
+floor/rooms-per-apartment min/max ranges, occupancy percent (0–100, previously always 100),
+percent of residents who pay something and percent of those who pay in full, and independent
+on/off toggles + percentages for guest generation, service/subscription generation, and operating
+expense generation (with an expense-percentage multiplier). Added `openSeedOptionsModal()` in
+`js/settings.js`, replacing the old one-click "تعبئة عشوائية للتجربة (إشغال 100%)" button with a
+"تحكم وتعبئة عشوائية للتجربة" button that opens a form (structure ranges, an occupancy slider,
+payment percentages, three feature checkboxes, service-subscribe %, expense multiplier) and only
+runs the seeder — behind the existing destructive-action confirmation dialog — after the user
+submits that form.
+Acceptance Criteria:
+- `seedRandomDormitoryData(options)` respects every option: occupancy percent no longer always
+  fills 100% of generated beds; structure ranges (floors/apartments/rooms) are configurable;
+  guests/services/expenses can each be independently disabled; payment/service-subscribe
+  percentages and the expense multiplier are configurable.
+- Calling `seedRandomDormitoryData()` with no arguments still reproduces the prior fixed behavior
+  (100% occupancy, same structure ranges) — verified so existing callers/tests aren't broken.
+- The Settings → "الغرف والأسرة" seeding button now opens a form first; the seed only runs after
+  the user submits it and confirms the destructive-action dialog.
+- `resetDormitoryOnly()`'s existing scoping (removes only `SEEDED_EXPENSE_MARKER`-tagged expenses
+  and dormitory-derived collections, never a real user-entered expense) still holds regardless of
+  which options were used to seed.
+- `node --check` passes on both touched files.
+- No pre-existing behavior outside `seedRandomDormitoryData()` and the seed-panel UI in
+  `js/settings.js` was changed.
+Completed:
+- `js/data.js`: `seedRandomDormitoryData()` rewritten to take an `options` object with defaults
+  matching the old hardcoded values; occupancy is now `Math.round(totalBeds * occupancyPercent/100)`
+  instead of always all beds; guests/services/expenses generation each gated behind a boolean
+  option; payment and service-subscribe rates now use the configurable percentages instead of fixed
+  0.75/0.7/0.35 constants; expense amounts scaled by a configurable multiplier. Summary object
+  extended with `occupiedBeds`, `occupancyPercent`, `servicesAssigned`.
+- `js/settings.js`: added `openSeedOptionsModal()` — a form covering all of the above, including an
+  occupancy `<input type="range">` with a live percentage label — wired so the seed only executes
+  after form submission + the existing `confirmAction()` dialog; updated the panel description text
+  and button label to reflect that the seed is now configurable rather than fixed at 100%.
+Validation:
+- `node --check` on both touched files — passed.
+- Runtime smoke test (Node `vm`-based harness, same pattern as TASK-008/TASK-009, loading
+  `js/data.js` for real): ran `seedRandomDormitoryData(options)` across four distinct option sets
+  (100% occupancy/all extras on; 40% occupancy/all extras off; 0% occupancy/large structure/2x
+  expense multiplier; 100% occupancy/100% payment/0x expense multiplier), asserting each time that
+  occupied-bed count matches the requested percentage exactly, resident count matches occupied
+  beds, disabled features produce zero output for that feature, chart-facing methods
+  (`calculateProfit`, `getMonthlyFinancials`, `getCashBalance`, `getReinvestmentSummary`) execute
+  without throwing, `resetDormitoryOnly()` removes only seeded expenses and preserves a real manual
+  expense, and post-reset occupancy returns to zero beds — all checks passed on all four runs.
+  Additionally ran `seedRandomDormitoryData()` with **no** arguments 5 times to confirm the
+  backward-compatible default still reproduces the old 100%-occupancy behavior every time.
+Checkpoint: TASK-010 (this entry)
+Next: Await user feedback from manually opening the new options modal in-browser (no browser/UI
+tool was available in this session — see Known Limitation in `.claude/current-task.md`).
+
+---
+
 <!--
   Add new tasks below using the same format. Keep them small enough that another Claude session
   could pick one up cold and finish it using only the repository + this file + current-task.md +

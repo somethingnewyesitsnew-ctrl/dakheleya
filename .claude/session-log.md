@@ -318,4 +318,60 @@ longer secret.
 
 Ending Status: COMPLETED (TASK-009 / REQ-004).
 
+Exact Next Action: See `.claude/handoff.md` (superseded by SESSION-008 below).
+
+---
+
+## SESSION-008
+
+Date: See `git log` for this session's TASK-010 commit.
+
+Environment: Claude.ai browser chat with code-execution/bash tool enabled — a new chat session. No
+GitHub token was supplied in this chat (not requested, since no push was asked for). Cloned the
+repo fresh (public HTTPS clone, read-only) into `/home/claude/repo` and confirmed it matched
+`origin/main` at `505097d` before starting any new work — one commit ahead of what `.claude/handoff.md`
+previously listed as the last-pushed SHA (`acc8cf3`); inspected it and found it was simply a prior
+session's own `.claude/` state-file update for TASK-009, not a real divergence or contradiction.
+
+Starting Checkpoint: `505097d` (confirmed via `git log --oneline -10` on the fresh clone).
+
+Active REQ: REQ-005 (new).
+
+Active TASK: TASK-010.
+
+Work Completed: Reworked `DataService.seedRandomDormitoryData()` in `js/data.js` to accept an
+`options` object instead of hardcoded values — configurable floors/apartments-per-floor/rooms-per-
+apartment ranges, occupancy percent (0–100, was always effectively 100), payment/full-payment
+percentages, and independent on/off toggles + percentages for guest generation, service/
+subscription generation, and operating-expense generation (with an expense multiplier) — with
+defaults exactly reproducing the prior hardcoded behavior so a no-args call is unchanged. Added
+`openSeedOptionsModal()` in `js/settings.js`, a form (including a live occupancy range slider) that
+the user must submit — and then confirm via the existing destructive-action dialog — before the
+seed actually runs; replaced the old fixed "تعبئة عشوائية للتجربة (إشغال 100%)" one-click button and
+updated the panel's description copy accordingly.
+
+Files Changed: `js/data.js`, `js/settings.js`.
+
+Validation Performed: `node --check` on both files (passed). Runtime smoke test: a Node `vm`-based
+harness (`/tmp/smoketest/harness.js`, scratch-only, not committed) shimming
+`localStorage`/`document`/`window`, loading `js/data.js` for real, calling
+`seedRandomDormitoryData(options)` across four distinct option combinations (100%-occupancy/all-
+extras-on; 40%-occupancy/all-extras-off; 0%-occupancy/large-structure/2x-expense-multiplier; 100%-
+occupancy/100%-payment/0x-expense-multiplier) and asserting: occupied-bed count equals
+`round(totalBeds * occupancyPercent/100)` exactly; resident count equals occupied beds; disabled
+features (guests/services/expenses) each produce zero output for that feature; `calculateProfit()`/
+`getMonthlyFinancials()`/`getCashBalance()`/`getReinvestmentSummary()` all execute without throwing;
+`resetDormitoryOnly()` removes only `SEEDED_EXPENSE_MARKER`-tagged expenses and preserves a real
+manually-added one; and post-reset occupancy returns to zero beds — every assertion passed on every
+run. A second harness (`/tmp/smoketest/harness_default.js`) called `seedRandomDormitoryData()` with
+no arguments 5 times, confirming the backward-compatible default still reproduces the old
+100%-occupancy behavior (`occ.available === 0`, `occ.rate === 100`) every time.
+
+Checkpoint Created: State files updated (this entry, `tasks.md`, `current-task.md`, `handoff.md`,
+`requests.md`, `project-state.md`) and committed locally in the session's clone. **Not pushed** —
+no GitHub token was supplied and no push was requested this session.
+
+Ending Status: COMPLETED (TASK-010 / REQ-005), pending the user's manual smoke test and, if wanted,
+a request to push to `origin/main`.
+
 Exact Next Action: See `.claude/handoff.md`.

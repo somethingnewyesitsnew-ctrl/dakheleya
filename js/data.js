@@ -1481,12 +1481,36 @@ const DataService = {
     // resetDormitoryOnly() يقدر يشيلها بدقة دون المساس بأي مصروف حقيقي أدخله المستخدم يدوياً.
     SEEDED_EXPENSE_MARKER: 'النظام (بيانات تجريبية للداخلية)',
 
-    // يولّد هيكل داخلية عشوائي كامل (طوابق ← شقق ← غرف ← أسرة) ويسكّن 100% من الأسرة بطالبات
-    // وهميات (بأسماء وأرقام هاتف وجامعات عشوائية)، مع دفعات إيجار، خدمات، ضيفات، إجازات، وأيضاً
-    // مصروفات تشغيلية واقعية (إيجار، مرتبات، كهرباء...) بنسبة من الإيراد المحصَّل — عشان صافي
-    // الربح ولوحة التحكم والتقارير والرسوم البيانية كلها تعكس وضعاً منطقياً ومترابطاً.
+    // يولّد هيكل داخلية عشوائي كامل (طوابق ← شقق ← غرف ← أسرة) حسب "options" اللي يحددها
+    // المستخدم (نطاق عدد الطوابق/الشقق/الغرف، نسبة الإشغال، نسبة الدفع، تفعيل/تعطيل الضيفات
+    // والخدمات والمصروفات...)، بدل قيم ثابتة في الكود. أي قيمة غير مُمرَّرة تأخذ نفس الافتراضي
+    // القديم (إشغال 100%، هيكل متوسط) عشان الاستدعاء بدون options يبقى بنفس السلوك السابق.
     // مخصص للتجربة فقط، ولا يمس الشركاء أو الإعدادات المالية العامة.
-    seedRandomDormitoryData() {
+    seedRandomDormitoryData(options = {}) {
+        const opts = {
+            floorsMin: Math.max(1, Number(options.floorsMin) || 2),
+            floorsMax: Math.max(1, Number(options.floorsMax) || 3),
+            aptsPerFloorMin: Math.max(1, Number(options.aptsPerFloorMin) || 2),
+            aptsPerFloorMax: Math.max(1, Number(options.aptsPerFloorMax) || 3),
+            roomsPerAptMin: Math.max(1, Number(options.roomsPerAptMin) || 3),
+            roomsPerAptMax: Math.max(1, Number(options.roomsPerAptMax) || 5),
+            occupancyPercent: Math.min(100, Math.max(0, options.occupancyPercent !== undefined ? Number(options.occupancyPercent) : 100)),
+            paymentPercent: Math.min(100, Math.max(0, options.paymentPercent !== undefined ? Number(options.paymentPercent) : 75)),
+            fullPaymentPercent: Math.min(100, Math.max(0, options.fullPaymentPercent !== undefined ? Number(options.fullPaymentPercent) : 70)),
+            generateGuests: options.generateGuests !== undefined ? !!options.generateGuests : true,
+            guestsMin: Math.max(0, Number(options.guestsMin) || 1),
+            guestsMax: Math.max(0, Number(options.guestsMax) || 3),
+            generateServices: options.generateServices !== undefined ? !!options.generateServices : true,
+            serviceSubscribePercent: Math.min(100, Math.max(0, options.serviceSubscribePercent !== undefined ? Number(options.serviceSubscribePercent) : 35)),
+            generateExpenses: options.generateExpenses !== undefined ? !!options.generateExpenses : true,
+            expensePercentMultiplier: Math.max(0, options.expensePercentMultiplier !== undefined ? Number(options.expensePercentMultiplier) : 1)
+        };
+        // نضمن إن الحد الأقصى ما يقلّش عن الحد الأدنى (لو المستخدم كتب أرقام مقلوبة بالغلط)
+        if (opts.floorsMax < opts.floorsMin) opts.floorsMax = opts.floorsMin;
+        if (opts.aptsPerFloorMax < opts.aptsPerFloorMin) opts.aptsPerFloorMax = opts.aptsPerFloorMin;
+        if (opts.roomsPerAptMax < opts.roomsPerAptMin) opts.roomsPerAptMax = opts.roomsPerAptMin;
+        if (opts.guestsMax < opts.guestsMin) opts.guestsMax = opts.guestsMin;
+
         const user = Utils.currentUserName();
         const settings = this.getSettings();
         const basePrice = Number(settings.bedPrice) || 400000;
@@ -1497,26 +1521,26 @@ const DataService = {
         const REGIONS = ['أمدرمان','بحري','ود مدني','الأبيض','كسلا','بورتسودان','الفاشر','الدمازين','عطبرة','الجزيرة'];
         const ROOM_TYPES = ['مفردة','مزدوجة','ثلاثية','رباعية'];
         const ROOM_CAPACITY = { 'مفردة': 1, 'مزدوجة': 2, 'ثلاثية': 3, 'رباعية': 4 };
-        const FLOOR_NAMES = ['الأول', 'الثاني', 'الثالث', 'الرابع'];
+        const FLOOR_NAMES = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن'];
 
         const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
         const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
         const randPhone = () => '09' + String(rand(10000000, 99999999));
 
-        const floorsCount = rand(2, 3);
+        const floorsCount = rand(opts.floorsMin, opts.floorsMax);
         let createdBeds = [];
         let apartmentsCount = 0, roomsCount = 0;
 
         for (let f = 1; f <= floorsCount; f++) {
             const floor = this.addFloor({ name: `الطابق ${FLOOR_NAMES[f-1] || f}`, order: f, description: 'تم إنشاؤه تلقائياً كبيانات تجريبية' });
-            const aptsOnFloor = rand(2, 3);
+            const aptsOnFloor = rand(opts.aptsPerFloorMin, opts.aptsPerFloorMax);
             for (let a = 1; a <= aptsOnFloor; a++) {
                 const aptNumber = `${f}${String(a).padStart(2, '0')}`;
                 const apartment = this.addApartment({ number: aptNumber, name: '', floorId: floor.id });
                 if (apartment.error) continue;
                 apartmentsCount++;
                 this.addBathroom({ name: 'حمام مشترك', apartmentId: apartment.id, type: 'حمام مشترك' });
-                const roomsOnApt = rand(3, 5);
+                const roomsOnApt = rand(opts.roomsPerAptMin, opts.roomsPerAptMax);
                 for (let r = 1; r <= roomsOnApt; r++) {
                     const roomType = pick(ROOM_TYPES);
                     const price = Math.max(basePrice + rand(-50000, 100000), 50000);
@@ -1530,12 +1554,13 @@ const DataService = {
             }
         }
 
-        // نسكّن 100% من الأسرة بطالبات وهميات — إشغال كامل حسب الطلب
+        // نسكّن نسبة الإشغال المطلوبة فقط (100% افتراضياً، أو أي نسبة يحددها المستخدم)
         const shuffled = [...createdBeds].sort(() => Math.random() - 0.5);
+        const bedsToFill = Math.round(shuffled.length * opts.occupancyPercent / 100);
         let residentsCreated = 0;
         let totalRevenueCollected = 0;
 
-        for (let i = 0; i < shuffled.length; i++) {
+        for (let i = 0; i < bedsToFill; i++) {
             const bed = shuffled[i];
             const room = this.getRoom(bed.roomId);
             const resident = this.addResident({
@@ -1554,57 +1579,63 @@ const DataService = {
                 paymentStatus: 'مستحق', notes: 'بيانات تجريبية (تم توليدها تلقائياً)'
             });
             residentsCreated++;
-            // نسبة عشوائية من الطالبات (75%) تكون دفعت جزءاً أو كل المستحق — عشان الإيرادات
-            // تظهر فعلياً في التحصيل، لوحة التحكم، والرسوم البيانية
-            if (Math.random() < 0.75) {
-                const full = Math.random() < 0.7;
+            // نسبة الطالبات اللي بتدفع جزءاً أو كل المستحق قابلة للتحكم عبر options
+            if (rand(1, 100) <= opts.paymentPercent) {
+                const full = rand(1, 100) <= opts.fullPaymentPercent;
                 const amount = full ? resident.monthlyRent : Math.max(Math.round(resident.monthlyRent * (rand(30, 80) / 100)), 1);
                 this.addResidentPayment(resident.id, { amount, method: pick(['نقدي','تحويل بنكي']) });
                 totalRevenueCollected += amount;
             }
         }
 
-        // خدمات تجريبية + اشتراكات عشوائية لبعض الطالبات
-        const serviceDefs = [
-            { name: 'اشتراك الإنترنت الشهري', type: 'الإنترنت', billingCycle: 'شهري', price: 15000 },
-            { name: 'وجبات يومية', type: 'الطعام', billingCycle: 'شهري', price: 60000 },
-            { name: 'اشتراك المكتبة', type: 'المكتبة', billingCycle: 'شهري', price: 8000 }
-        ];
-        const services = serviceDefs.map(s => this.addService(s));
-        const activeResidents = this.getResidents().filter(r => !r.checkOut);
-        activeResidents.forEach(r => {
-            services.forEach(s => { if (Math.random() < 0.35) this.assignResidentService(r.id, s.id, { price: s.price }); });
-        });
-
-        // ضيفات تجريبية — نسجّل دفع البعض منها عشان تظهر كإيراد فعلي (إيراد استضافة)
-        let guestsCreated = 0;
-        const guestCount = Math.min(rand(1, 3), activeResidents.length);
-        const createdGuestIds = [];
-        for (let i = 0; i < guestCount; i++) {
-            const host = pick(activeResidents);
-            const checkOutDate = new Date();
-            checkOutDate.setDate(checkOutDate.getDate() + rand(1, 5));
-            const guest = this.addGuest({
-                name: `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`, hostResidentId: host.id, phone: randPhone(),
-                checkIn: Utils.todayISO(), checkOut: checkOutDate.toISOString().slice(0, 10), dailyRate: 50000
+        // خدمات تجريبية + اشتراكات عشوائية لبعض الطالبات (يمكن تعطيلها بالكامل)
+        let servicesAssigned = 0;
+        if (opts.generateServices) {
+            const serviceDefs = [
+                { name: 'اشتراك الإنترنت الشهري', type: 'الإنترنت', billingCycle: 'شهري', price: 15000 },
+                { name: 'وجبات يومية', type: 'الطعام', billingCycle: 'شهري', price: 60000 },
+                { name: 'اشتراك المكتبة', type: 'المكتبة', billingCycle: 'شهري', price: 8000 }
+            ];
+            const services = serviceDefs.map(s => this.addService(s));
+            const activeResidents = this.getResidents().filter(r => !r.checkOut);
+            activeResidents.forEach(r => {
+                services.forEach(s => {
+                    if (rand(1, 100) <= opts.serviceSubscribePercent) {
+                        this.assignResidentService(r.id, s.id, { price: s.price });
+                        servicesAssigned++;
+                    }
+                });
             });
-            if (guest && guest.id) createdGuestIds.push(guest.id);
-            guestsCreated++;
         }
-        createdGuestIds.forEach(id => { if (Math.random() < 0.5) this.markGuestPaid(id); });
+
+        // ضيفات تجريبية — نسجّل دفع البعض منها عشان تظهر كإيراد فعلي (إيراد استضافة) — قابلة للتعطيل
+        let guestsCreated = 0;
+        if (opts.generateGuests) {
+            const activeResidents = this.getResidents().filter(r => !r.checkOut);
+            const guestCount = Math.min(rand(opts.guestsMin, opts.guestsMax), activeResidents.length);
+            const createdGuestIds = [];
+            for (let i = 0; i < guestCount; i++) {
+                const host = pick(activeResidents);
+                const checkOutDate = new Date();
+                checkOutDate.setDate(checkOutDate.getDate() + rand(1, 5));
+                const guest = this.addGuest({
+                    name: `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`, hostResidentId: host.id, phone: randPhone(),
+                    checkIn: Utils.todayISO(), checkOut: checkOutDate.toISOString().slice(0, 10), dailyRate: 50000
+                });
+                if (guest && guest.id) createdGuestIds.push(guest.id);
+                guestsCreated++;
+            }
+            createdGuestIds.forEach(id => { if (Math.random() < 0.5) this.markGuestPaid(id); });
+        }
 
         // ملاحظة: هذا المولّد عمداً لا يُنشئ إجازات تجريبية. أي إجازة — حتى مع الاحتفاظ
         // بالسرير — تضع حالة السرير على "محجوز للإجازة" وليس "مشغول"، وحساب نسبة الإشغال
-        // الفعلي في التطبيق (occupancyStats) يحتسب "مشغول" فقط كأسرّة مُشغَلة. إضافة إجازات
-        // هنا كانت (بالاختبار الفعلي) تُنزِّل النسبة عن 100% رغم عدم وجود أي سرير "متاح" —
-        // وده تعارض صريح مع طلب إشغال 100%، فتم إسقاطها من هذا المولّد تحديداً (الإجازات لسه
-        // متاحة عادي يدوياً من صفحة "الإجازات" لأي طالبة بعد التعبئة).
+        // الفعلي في التطبيق (occupancyStats) يحتسب "مشغول" فقط كأسرّة مُشغَلة، فإضافة إجازات
+        // هنا كانت (بالاختبار الفعلي) تُنزِّل نسبة الإشغال المحسوبة رغم عدم توفر خيار تحكم لها هنا —
+        // فتم إسقاطها من هذا المولّد تحديداً (الإجازات لسه متاحة عادي يدوياً من صفحة "الإجازات").
         const vacationsCreated = 0;
 
-        // ---------------- مصروفات تشغيلية واقعية ----------------
-        // نولّد مصروفات مرتبطة بنسبة من الإيراد، عشان صافي الربح والرسوم البيانية (اتجاه
-        // الإيرادات/المصروفات، أعلى فئات المصروفات، مكوّنات الحركة النقدية) تعكس وضعاً منطقياً
-        // بدل ما تفضل فاضية أو تظهر إيرادات بدون أي مصروف مقابلها.
+        // ---------------- مصروفات تشغيلية واقعية (قابلة للتعطيل، ونسبتها قابلة للتحكم) ----------------
         const EXPENSE_SEED_DEFS = [
             { category: 'الإيجار', min: 0.15, max: 0.25 },
             { category: 'المرتبات', min: 0.10, max: 0.18 },
@@ -1617,41 +1648,44 @@ const DataService = {
             { category: 'الصيانة', min: 0.02, max: 0.05 },
             { category: 'المشتريات', min: 0.01, max: 0.04 }
         ];
-        const partnersNames = this.getPartners().map(p => p.name);
-        // نضمن قاعدة إيراد معقولة حتى لو محدش دفع فعلياً (عشان المصروفات ما تفضلش صفر)
-        const revenueBase = Math.max(totalRevenueCollected, residentsCreated * basePrice * 0.5, basePrice);
         let expensesCreated = 0, totalExpensesSeeded = 0;
+        if (opts.generateExpenses) {
+            const partnersNames = this.getPartners().map(p => p.name);
+            // نضمن قاعدة إيراد معقولة حتى لو محدش دفع فعلياً (عشان المصروفات ما تفضلش صفر)
+            const revenueBase = Math.max(totalRevenueCollected, residentsCreated * basePrice * 0.5, basePrice);
 
-        EXPENSE_SEED_DEFS.forEach(def => {
-            if (Math.random() < 0.85) {
-                const pct = def.min + Math.random() * (def.max - def.min);
-                const amount = Math.max(Math.round(revenueBase * pct), 5000);
-                this.addExpense({
-                    date: Utils.todayISO(),
-                    category: def.category,
-                    amount,
-                    chargedAmount: amount,
-                    description: `${def.category} (بيانات تجريبية للداخلية)`,
-                    paidBy: partnersNames.length ? pick(partnersNames) : '',
-                    paymentSource: pick(['نقدي','تحويل بنكي','الخزينة']),
-                    nature: 'تجاري',
-                    needsAllocation: false,
-                    status: 'مسجل',
-                    createdBy: this.SEEDED_EXPENSE_MARKER
-                });
-                expensesCreated++;
-                totalExpensesSeeded += amount;
-            }
-        });
+            EXPENSE_SEED_DEFS.forEach(def => {
+                if (Math.random() < 0.85) {
+                    const pct = (def.min + Math.random() * (def.max - def.min)) * opts.expensePercentMultiplier;
+                    const amount = Math.max(Math.round(revenueBase * pct), 5000);
+                    this.addExpense({
+                        date: Utils.todayISO(),
+                        category: def.category,
+                        amount,
+                        chargedAmount: amount,
+                        description: `${def.category} (بيانات تجريبية للداخلية)`,
+                        paidBy: partnersNames.length ? pick(partnersNames) : '',
+                        paymentSource: pick(['نقدي','تحويل بنكي','الخزينة']),
+                        nature: 'تجاري',
+                        needsAllocation: false,
+                        status: 'مسجل',
+                        createdBy: this.SEEDED_EXPENSE_MARKER
+                    });
+                    expensesCreated++;
+                    totalExpensesSeeded += amount;
+                }
+            });
+        }
 
         const summary = {
             floors: floorsCount, apartments: apartmentsCount, rooms: roomsCount, beds: createdBeds.length,
+            occupiedBeds: bedsToFill, occupancyPercent: opts.occupancyPercent,
             residents: residentsCreated, guests: guestsCreated, vacations: vacationsCreated,
-            expenses: expensesCreated, revenueCollected: totalRevenueCollected, expensesTotal: totalExpensesSeeded
+            servicesAssigned, expenses: expensesCreated, revenueCollected: totalRevenueCollected, expensesTotal: totalExpensesSeeded
         };
         this.addActivity({
-            user, action: 'ولّد بيانات داخلية عشوائية للتجربة (إشغال 100% + مصروفات تشغيلية واقعية)',
-            entity: `${summary.floors} طابق، ${summary.apartments} شقة، ${summary.rooms} غرفة، ${summary.residents} طالبة (100% إشغال)، ${summary.expenses} بند مصروف`
+            user, action: `ولّد بيانات داخلية عشوائية للتجربة (إشغال ${opts.occupancyPercent}% حسب الإعدادات المختارة)`,
+            entity: `${summary.floors} طابق، ${summary.apartments} شقة، ${summary.rooms} غرفة، ${summary.residents} طالبة (${opts.occupancyPercent}% إشغال)، ${summary.expenses} بند مصروف`
         });
         return summary;
     },

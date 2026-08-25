@@ -21,9 +21,9 @@ Architecture:
   to 9 top-level items (Dashboard, Partnership, Dormitory, Finance, Setup, Review, Tools, Reports, Settings)
 
 Current Phase: Workflow finalized under REQ-001 (TASK-001–006). REQ-002/TASK-007, REQ-003/TASK-008,
-and REQ-004/TASK-009 are real application-feature work done under this system, culminating in a
-dormitory test-data seeder that now produces a fully coherent 100%-occupied, profit/expense-bearing
-demo state in one click.
+REQ-004/TASK-009, and REQ-005/TASK-010 are real application-feature work done under this system: a
+dormitory test-data seeder that produces a coherent, profit/expense-bearing demo state, now fully
+parameterized and put behind a user-facing options form instead of a fixed one-click action.
 
 Overall Status: Healthy. App is functional. Workflow/feature history:
 - TASK-001 (+ DECISION-002): installed the workflow scaffold, extended with task planning and a
@@ -46,9 +46,15 @@ Overall Status: Healthy. App is functional. Workflow/feature history:
   revenue/expense-driven dashboard chart populate coherently right after seeding; dropped vacation
   seeding after runtime testing showed it silently capped occupancy below 100%; scoped
   `resetDormitoryOnly()` to remove only the seeder's own tagged expenses.
+- TASK-010 (REQ-005): put the dormitory seeder fully under user control — `seedRandomDormitoryData()`
+  now takes an `options` object (structure ranges, occupancy %, payment %, per-feature
+  guests/services/expenses toggles, expense multiplier) instead of hardcoded values, and Settings
+  now opens a form/modal (with a live occupancy slider) before running the seed, instead of a fixed
+  one-click 100%-occupancy button. Committed locally; not yet pushed (no token supplied this
+  session).
 
-Active Task: None — TASK-001 through TASK-009 all COMPLETED. Awaiting the user's manual smoke-test
-feedback, or the next request (see `.claude/requests.md` for REQ-004's status and `.claude/tasks.md`
+Active Task: None — TASK-001 through TASK-010 all COMPLETED. Awaiting the user's manual smoke-test
+feedback, or the next request (see `.claude/requests.md` for REQ-005's status and `.claude/tasks.md`
 for the task queue).
 
 Environment Note: This project may be accessed either via a local Claude Code checkout with Git CLI,

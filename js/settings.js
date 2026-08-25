@@ -144,17 +144,16 @@ function renderRoomsTabContent(container) {
         <div class="app-card-body">
             <p class="text-muted mb-3" style="font-size:13px;">
                 <i class="bi bi-info-circle text-teal me-1"></i>
-                لتجربة النظام بسرعة: <b>"تعبئة عشوائية"</b> بتولّد لك طوابق وشقق وغرف وأسرة عشوائية،
-                وتسكّن <b>100% منها</b> (كل الأسرة بدون استثناء) بطالبات وهميات (بأسماء ومدفوعات
-                وخدمات وضيفات عشوائية)، مع <b>مصروفات تشغيلية واقعية</b> (إيجار، مرتبات، كهرباء، مياه...) بنسبة
-                من الإيراد المحصَّل — عشان لوحة التحكم والتقارير والرسوم البيانية (الأرباح،
-                الإشغال، اتجاه الإيرادات والمصروفات...) كلها تشتغل وتوريك وضعاً مالياً منطقياً
-                ومترابطاً، من غير ما تلمس الشركاء أو إعدادات المالية العامة. و<b>"إعادة تهيئة
-                الداخلية"</b> بتمسح كل ده (بما فيها المصروفات التجريبية فقط) وترجّع الداخلية فاضية
-                تماماً عشان تجرّب من جديد.
+                لتجربة النظام بسرعة: <b>"تعبئة عشوائية"</b> بتفتح لك نافذة تحكم تحدد فيها بنفسك كل
+                التفاصيل — عدد الطوابق والشقق والغرف، نسبة الإشغال، نسبة الطالبات اللي دفعت، وهل تريد
+                توليد ضيفات وخدمات ومصروفات تشغيلية أو لا — قبل ما ينفّذ أي شيء. عشان لوحة التحكم
+                والتقارير والرسوم البيانية (الأرباح، الإشغال، اتجاه الإيرادات والمصروفات...) تشتغل
+                وتوريك وضعاً مالياً منطقياً ومترابطاً حسب الإعدادات اللي تختارها، من غير ما يلمس
+                الشركاء أو إعدادات المالية العامة. و<b>"إعادة تهيئة الداخلية"</b> بتمسح كل ده (بما
+                فيها المصروفات التجريبية فقط) وترجّع الداخلية فاضية تماماً عشان تجرّب من جديد.
             </p>
             <div class="d-flex gap-2 flex-wrap">
-                <button class="btn btn-brand btn-sm" id="seed-random-dorm-btn"><i class="bi bi-shuffle me-1"></i>تعبئة عشوائية للتجربة (إشغال 100%)</button>
+                <button class="btn btn-brand btn-sm" id="seed-random-dorm-btn"><i class="bi bi-sliders me-1"></i>تحكم وتعبئة عشوائية للتجربة</button>
                 <button class="btn btn-outline-danger btn-sm" id="reset-dorm-only-btn"><i class="bi bi-arrow-counterclockwise me-1"></i>إعادة تهيئة الداخلية من الصفر</button>
             </div>
         </div>
@@ -166,11 +165,7 @@ function renderRoomsTabContent(container) {
     });
 
     document.getElementById('seed-random-dorm-btn').addEventListener('click', () => {
-        confirmAction('سيتم توليد طوابق وشقق وغرف وأسرة عشوائية وتسكينها بالكامل (100%) بطالبات وهميات، بالإضافة لمصروفات تشغيلية تجريبية واقعية (فوق أي بيانات موجودة حالياً في الداخلية). هل تريد المتابعة؟', () => {
-            const summary = DataService.seedRandomDormitoryData();
-            showToast(`تم توليد ${summary.floors} طابق و${summary.rooms} غرفة و${summary.residents} طالبة (إشغال 100%) و${summary.expenses} بند مصروف تجريبياً`, 'success');
-            Pages.settings(container);
-        }, false);
+        openSeedOptionsModal(container);
     });
 
     document.getElementById('reset-dorm-only-btn').addEventListener('click', () => {
@@ -180,6 +175,114 @@ function renderRoomsTabContent(container) {
             Pages.settings(container);
         });
     });
+}
+
+/* ---------------- نافذة التحكم في التعبئة العشوائية للداخلية ---------------- */
+function openSeedOptionsModal(container) {
+    const id = 'seedOptionsModal';
+    document.getElementById(id)?.remove();
+    const html = `
+    <div class="modal fade" id="${id}" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title fw-bold"><i class="bi bi-sliders me-2 text-teal"></i>تحكم في التعبئة العشوائية</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="seed-options-form">
+                <div class="section-title" style="margin-top:0;font-size:14px;"><i class="bi bi-layers text-teal"></i>هيكل الداخلية</div>
+                <div class="row g-3">
+                    <div class="col-6 col-md-3"><label class="form-label fw-bold">أقل عدد طوابق</label><input type="number" class="form-control" name="floorsMin" min="1" value="2"></div>
+                    <div class="col-6 col-md-3"><label class="form-label fw-bold">أكبر عدد طوابق</label><input type="number" class="form-control" name="floorsMax" min="1" value="3"></div>
+                    <div class="col-6 col-md-3"><label class="form-label fw-bold">أقل شقق/طابق</label><input type="number" class="form-control" name="aptsPerFloorMin" min="1" value="2"></div>
+                    <div class="col-6 col-md-3"><label class="form-label fw-bold">أكبر شقق/طابق</label><input type="number" class="form-control" name="aptsPerFloorMax" min="1" value="3"></div>
+                    <div class="col-6 col-md-3"><label class="form-label fw-bold">أقل غرف/شقة</label><input type="number" class="form-control" name="roomsPerAptMin" min="1" value="3"></div>
+                    <div class="col-6 col-md-3"><label class="form-label fw-bold">أكبر غرف/شقة</label><input type="number" class="form-control" name="roomsPerAptMax" min="1" value="5"></div>
+                </div>
+
+                <div class="section-title" style="font-size:14px;"><i class="bi bi-person-badge text-teal"></i>التسكين والدفع</div>
+                <div class="row g-3">
+                    <div class="col-6 col-md-4">
+                        <label class="form-label fw-bold d-flex justify-content-between">نسبة الإشغال <span id="occ-val" class="text-teal">100%</span></label>
+                        <input type="range" class="form-range" id="seed-occupancy" name="occupancyPercent" min="0" max="100" value="100">
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <label class="form-label fw-bold">% الطالبات اللي دفعن حاجة</label>
+                        <input type="number" class="form-control" name="paymentPercent" min="0" max="100" value="75">
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <label class="form-label fw-bold">% اللي دفعن كامل المبلغ (من ضمن اللي دفعن)</label>
+                        <input type="number" class="form-control" name="fullPaymentPercent" min="0" max="100" value="70">
+                    </div>
+                </div>
+
+                <div class="section-title" style="font-size:14px;"><i class="bi bi-stars text-teal"></i>إضافات</div>
+                <div class="row g-3 align-items-center">
+                    <div class="col-6 col-md-4">
+                        <div class="form-check"><input class="form-check-input" type="checkbox" name="generateServices" id="opt-services" checked><label class="form-check-label fw-bold" for="opt-services">توليد خدمات واشتراكات</label></div>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <div class="form-check"><input class="form-check-input" type="checkbox" name="generateGuests" id="opt-guests" checked><label class="form-check-label fw-bold" for="opt-guests">توليد ضيفات</label></div>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <div class="form-check"><input class="form-check-input" type="checkbox" name="generateExpenses" id="opt-expenses" checked><label class="form-check-label fw-bold" for="opt-expenses">توليد مصروفات تشغيلية</label></div>
+                    </div>
+                </div>
+                <div class="row g-3 mt-1">
+                    <div class="col-6"><label class="form-label fw-bold">نسبة اشتراك الطالبة في كل خدمة %</label><input type="number" class="form-control" name="serviceSubscribePercent" min="0" max="100" value="35"></div>
+                    <div class="col-6"><label class="form-label fw-bold">مضاعف نسبة المصروفات (1 = افتراضي)</label><input type="number" step="0.1" class="form-control" name="expensePercentMultiplier" min="0" value="1"></div>
+                </div>
+                <div class="alert alert-light border mt-3 mb-0" style="font-size:12.5px;">
+                    <i class="bi bi-info-circle text-teal me-1"></i>
+                    هذه التعبئة تُضاف فوق أي بيانات موجودة حالياً في الداخلية، ولا تؤثر على الشركاء أو
+                    إعدادات المالية العامة. يمكن حذفها لاحقاً بالكامل عبر "إعادة تهيئة الداخلية".
+                </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-light border" data-bs-dismiss="modal">إلغاء</button>
+            <button class="btn btn-brand" id="run-seed-btn"><i class="bi bi-shuffle me-1"></i>تنفيذ التعبئة</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+    document.getElementById('modal-root').insertAdjacentHTML('beforeend', html);
+    const el = document.getElementById(id);
+    const modal = new bootstrap.Modal(el);
+
+    const occRange = document.getElementById('seed-occupancy');
+    occRange.addEventListener('input', () => { document.getElementById('occ-val').textContent = occRange.value + '%'; });
+
+    document.getElementById('run-seed-btn').addEventListener('click', () => {
+        const fd = Object.fromEntries(new FormData(document.getElementById('seed-options-form')).entries());
+        const options = {
+            floorsMin: Number(fd.floorsMin) || 1,
+            floorsMax: Number(fd.floorsMax) || 1,
+            aptsPerFloorMin: Number(fd.aptsPerFloorMin) || 1,
+            aptsPerFloorMax: Number(fd.aptsPerFloorMax) || 1,
+            roomsPerAptMin: Number(fd.roomsPerAptMin) || 1,
+            roomsPerAptMax: Number(fd.roomsPerAptMax) || 1,
+            occupancyPercent: Number(fd.occupancyPercent) || 0,
+            paymentPercent: Number(fd.paymentPercent) || 0,
+            fullPaymentPercent: Number(fd.fullPaymentPercent) || 0,
+            generateServices: !!document.getElementById('opt-services').checked,
+            generateGuests: !!document.getElementById('opt-guests').checked,
+            generateExpenses: !!document.getElementById('opt-expenses').checked,
+            serviceSubscribePercent: Number(fd.serviceSubscribePercent) || 0,
+            expensePercentMultiplier: Number(fd.expensePercentMultiplier) || 0
+        };
+        modal.hide();
+        el.addEventListener('hidden.bs.modal', () => {
+            confirmAction(`سيتم توليد هيكل داخلية عشوائي بإشغال ${options.occupancyPercent}% حسب الإعدادات اللي حددتها (فوق أي بيانات موجودة حالياً في الداخلية). هل تريد المتابعة؟`, () => {
+                const summary = DataService.seedRandomDormitoryData(options);
+                showToast(`تم توليد ${summary.floors} طابق و${summary.rooms} غرفة و${summary.residents} طالبة (إشغال ${summary.occupancyPercent}%) و${summary.expenses} بند مصروف`, 'success');
+                Pages.settings(container);
+            }, false);
+        }, { once: true });
+    });
+    el.addEventListener('hidden.bs.modal', () => el.remove());
+    modal.show();
 }
 
 /* ---------------- تبويب الإيجار والمصروفات ---------------- */

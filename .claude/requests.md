@@ -198,3 +198,39 @@ collected/expected revenue, each tagged via a new `DataService.SEEDED_EXPENSE_MA
 panel description/confirm/toast copy updated to match (100% occupancy, expense generation,
 vacations no longer mentioned). Validated via `node --check` plus a runtime Node `vm`-based smoke
 test (not just syntax-check) run 8+ times with fresh random data each run.
+
+---
+
+## REQ-005
+
+Date: See `git log` for the commit date of TASK-010.
+
+Original Request Summary: (Arabic, paraphrased) "التعبئة العشوائية عاوزها تكون تحت تحكمي" — the
+user wants the dormitory random-fill/seeder to be fully under their control instead of a one-click
+action with hardcoded values (fixed ~100% occupancy, fixed structure ranges, fixed feature set).
+
+Objective: Turn `DataService.seedRandomDormitoryData()` into a parameterized generator (structure
+ranges, occupancy percent, payment percentages, and independent on/off toggles for
+guests/services/expenses, with an expense multiplier), and give the user an actual UI (a form/modal
+in Settings) to set those parameters before each run, instead of only a fixed-behavior button.
+
+Status: COMPLETED
+
+Related Task IDs: TASK-010
+
+Completed Tasks:
+- TASK-010 — see `.claude/tasks.md` for full detail.
+
+Current Task: None — TASK-010 completed in the same session it was requested.
+
+Remaining Tasks: None queued for this REQ.
+
+Final Outcome: `js/data.js` — `seedRandomDormitoryData(options)` now takes a full options object
+(floors/apartments/rooms min-max ranges, occupancy %, payment %, full-payment %, per-feature
+guests/services/expenses toggles + their own percentages, expense multiplier) with defaults
+matching the prior hardcoded behavior for backward compatibility. `js/settings.js` — new
+`openSeedOptionsModal()` presents all of these as a form (including a live occupancy slider) before
+running the seed, replacing the previous one-click fixed-100% button. Validated via `node --check`
+plus a runtime Node `vm`-based smoke test across four distinct option combinations (including 0%
+and 100% occupancy, all-extras-off, and a 2x expense multiplier) plus 5 no-args runs confirming
+backward compatibility.
