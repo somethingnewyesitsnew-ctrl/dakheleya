@@ -140,17 +140,20 @@ function renderRoomsTabContent(container) {
     </div>
 
     <div class="app-card mt-3" style="border-color:#f2dfb0;">
-        <div class="app-card-header"><h2><i class="bi bi-shuffle me-1 text-teal"></i>بيانات تجريبية للداخلية</h2></div>
+        <div class="app-card-header"><h2><i class="bi bi-shuffle me-1 text-teal"></i>بيانات تجريبية للنظام كامل</h2></div>
         <div class="app-card-body">
             <p class="text-muted mb-3" style="font-size:13px;">
                 <i class="bi bi-info-circle text-teal me-1"></i>
-                لتجربة النظام بسرعة: <b>"تعبئة عشوائية"</b> بتفتح لك نافذة تحكم تحدد فيها بنفسك كل
+                لتجربة النظام بسرعة: <b>"تحكم وتعبئة عشوائية"</b> بتفتح لك نافذة تحدد فيها بنفسك كل
                 التفاصيل — عدد الطوابق والشقق والغرف، نسبة الإشغال، نسبة الطالبات اللي دفعت، وهل تريد
-                توليد ضيفات وخدمات ومصروفات تشغيلية أو لا — قبل ما ينفّذ أي شيء. عشان لوحة التحكم
-                والتقارير والرسوم البيانية (الأرباح، الإشغال، اتجاه الإيرادات والمصروفات...) تشتغل
-                وتوريك وضعاً مالياً منطقياً ومترابطاً حسب الإعدادات اللي تختارها، من غير ما يلمس
-                الشركاء أو إعدادات المالية العامة. و<b>"إعادة تهيئة الداخلية"</b> بتمسح كل ده (بما
-                فيها المصروفات التجريبية فقط) وترجّع الداخلية فاضية تماماً عشان تجرّب من جديد.
+                توليد ضيفات وخدمات ومصروفات تشغيلية. وممكن كمان تفعّل <b>"نشاط شهر كامل"</b> عشان
+                التواريخ (تسكين، دفعات، مصروفات) تنتشر على مدار شهر كامل بدل ما تكون كلها اليوم، ويضيف
+                كمان مساهمات رأس مال وسلف شركاء وشراء أصل وتوزيع أرباح — عشان <b>كل صفحات النظام</b>
+                (الشراكة، المالية، التأسيس والتجهيز، المراجعة، لوحة التحكم) تشتغل وتوريك وضعاً منطقياً
+                ومترابطاً، مش بس منطقة الداخلية. و<b>"إعادة تهيئة الداخلية"</b> بتمسح كل البيانات
+                التجريبية دي (الداخلية + النشاط المالي الناتج عنها) وترجّع النظام فاضياً عشان تجرّب من
+                جديد، دون المساس بالشركاء أنفسهم أو إعدادات المالية العامة أو أي بيانات حقيقية أدخلتها
+                بنفسك.
             </p>
             <div class="d-flex gap-2 flex-wrap">
                 <button class="btn btn-brand btn-sm" id="seed-random-dorm-btn"><i class="bi bi-sliders me-1"></i>تحكم وتعبئة عشوائية للتجربة</button>
@@ -169,9 +172,10 @@ function renderRoomsTabContent(container) {
     });
 
     document.getElementById('reset-dorm-only-btn').addEventListener('click', () => {
-        confirmAction('سيتم حذف كل شيء في الداخلية نهائياً (الطوابق، الشقق، الغرف، الأسرة، الطالبات، الضيفات، الخدمات، الإجازات) وأي إيرادات ومصروفات تجريبية ناتجة عنها. الشركاء وإعدادات المالية العامة والمصروفات الحقيقية لن يتأثروا. هذا الإجراء لا يمكن التراجع عنه. هل تريد المتابعة؟', () => {
+        confirmAction('سيتم حذف كل شيء في الداخلية نهائياً (الطوابق، الشقق، الغرف، الأسرة، الطالبات، الضيفات، الخدمات، الإجازات)، وأي إيرادات ومصروفات تجريبية ناتجة عنها، وأي مساهمات رأس مال أو سلف شركاء أو أصول أو توزيعات أرباح تجريبية أضافها "نشاط الشهر الكامل". الشركاء أنفسهم وإعدادات المالية العامة وأي بيانات حقيقية أدخلتها بنفسك لن تتأثر. هذا الإجراء لا يمكن التراجع عنه. هل تريد المتابعة؟', () => {
             DataService.resetDormitoryOnly();
-            showToast('تم إعادة تهيئة الداخلية من الصفر', 'warning');
+            showToast('تم إعادة تهيئة الداخلية والبيانات التجريبية المرتبطة بها من الصفر', 'warning');
+            if (typeof updateDevBadge === 'function') updateDevBadge();
             Pages.settings(container);
         });
     });
@@ -233,10 +237,27 @@ function openSeedOptionsModal(container) {
                     <div class="col-6"><label class="form-label fw-bold">نسبة اشتراك الطالبة في كل خدمة %</label><input type="number" class="form-control" name="serviceSubscribePercent" min="0" max="100" value="35"></div>
                     <div class="col-6"><label class="form-label fw-bold">مضاعف نسبة المصروفات (1 = افتراضي)</label><input type="number" step="0.1" class="form-control" name="expensePercentMultiplier" min="0" value="1"></div>
                 </div>
+
+                <div class="section-title" style="font-size:14px;"><i class="bi bi-calendar-range text-teal"></i>نشاط شهر كامل عبر كل صفحات النظام</div>
+                <div class="row g-3 align-items-center">
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="opt-full-activity" checked>
+                            <label class="form-check-label fw-bold" for="opt-full-activity">تفعيل نشاط شهر كامل (مساهمات رأس مال، سلف شركاء، شراء أصل، توزيع أرباح)</label>
+                        </div>
+                        <div class="form-text" style="font-size:11px;">لو مفعّل: التسكين والدفعات والمصروفات تتوزّع على مدار الفترة أدناه بدل ما تكون كلها اليوم، وتُضاف حركة في صفحات "الشراكة" و"التأسيس والتجهيز" و"الخزينة" أيضاً — مش بس الداخلية.</div>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <label class="form-label fw-bold">عدد أيام الانتشار الزمني (شهر ≈ 30)</label>
+                        <input type="number" class="form-control" id="opt-spread-days" min="0" max="365" value="30">
+                    </div>
+                </div>
+
                 <div class="alert alert-light border mt-3 mb-0" style="font-size:12.5px;">
                     <i class="bi bi-info-circle text-teal me-1"></i>
-                    هذه التعبئة تُضاف فوق أي بيانات موجودة حالياً في الداخلية، ولا تؤثر على الشركاء أو
+                    هذه التعبئة تُضاف فوق أي بيانات موجودة حالياً، ولا تؤثر على الشركاء أنفسهم أو
                     إعدادات المالية العامة. يمكن حذفها لاحقاً بالكامل عبر "إعادة تهيئة الداخلية".
+                    كل بيانات هذه الشاشة <b>تجريبية بالكامل</b> ولا تمثل بيانات حقيقية.
                 </div>
             </form>
           </div>
@@ -256,6 +277,7 @@ function openSeedOptionsModal(container) {
 
     document.getElementById('run-seed-btn').addEventListener('click', () => {
         const fd = Object.fromEntries(new FormData(document.getElementById('seed-options-form')).entries());
+        const fullSystemActivity = !!document.getElementById('opt-full-activity').checked;
         const options = {
             floorsMin: Number(fd.floorsMin) || 1,
             floorsMax: Number(fd.floorsMax) || 1,
@@ -270,13 +292,21 @@ function openSeedOptionsModal(container) {
             generateGuests: !!document.getElementById('opt-guests').checked,
             generateExpenses: !!document.getElementById('opt-expenses').checked,
             serviceSubscribePercent: Number(fd.serviceSubscribePercent) || 0,
-            expensePercentMultiplier: Number(fd.expensePercentMultiplier) || 0
+            expensePercentMultiplier: Number(fd.expensePercentMultiplier) || 0,
+            fullSystemActivity,
+            spreadOverDays: Number(document.getElementById('opt-spread-days').value) || 0
         };
         modal.hide();
         el.addEventListener('hidden.bs.modal', () => {
-            confirmAction(`سيتم توليد هيكل داخلية عشوائي بإشغال ${options.occupancyPercent}% حسب الإعدادات اللي حددتها (فوق أي بيانات موجودة حالياً في الداخلية). هل تريد المتابعة؟`, () => {
+            const spreadNote = options.spreadOverDays > 0 ? ` وتوزيعها على مدار آخر ${options.spreadOverDays} يوماً` : '';
+            const activityNote = fullSystemActivity ? '، بالإضافة لمساهمات رأس مال وسلف شركاء وشراء أصل وتوزيع أرباح تجريبية في صفحات الشراكة والتأسيس والخزينة' : '';
+            confirmAction(`سيتم توليد بيانات تجريبية بإشغال ${options.occupancyPercent}%${spreadNote}${activityNote} (فوق أي بيانات موجودة حالياً). تذكّر أن هذه بيانات تجريبية بالكامل ولا تمثل بيانات حقيقية. هل تريد المتابعة؟`, () => {
                 const summary = DataService.seedRandomDormitoryData(options);
-                showToast(`تم توليد ${summary.floors} طابق و${summary.rooms} غرفة و${summary.residents} طالبة (إشغال ${summary.occupancyPercent}%) و${summary.expenses} بند مصروف`, 'success');
+                const extra = summary.fullSystemActivity
+                    ? `، ${summary.advancesCreated} سلفة، ${summary.assetsCreated} أصل، ${summary.distributionsCreated} توزيع أرباح`
+                    : '';
+                showToast(`تم توليد ${summary.floors} طابق و${summary.rooms} غرفة و${summary.residents} طالبة (إشغال ${summary.occupancyPercent}%) و${summary.expenses} بند مصروف${extra} — بيانات تجريبية بالكامل`, 'success');
+                if (typeof updateDevBadge === 'function') updateDevBadge();
                 Pages.settings(container);
             }, false);
         }, { once: true });

@@ -1,17 +1,30 @@
 # CURRENT TASK
 
 ## Task ID
-None active — TASK-001 through TASK-010 are all COMPLETED. Awaiting the next request from the user.
+None active — TASK-001 through TASK-011 are all COMPLETED. Awaiting the next request from the user.
 
 ## Most Recently Completed Task
-TASK-010 — Put the dormitory random-fill (seeder) fully under user control via an options modal.
-Parent Request: REQ-005. `seedRandomDormitoryData()` now takes an `options` object (structure
-ranges, occupancy %, payment %, per-feature toggles for guests/services/expenses, expense
-multiplier) instead of hardcoded ~100%-occupancy values, and Settings now opens a form/modal before
-running the seed instead of a fixed one-click action (see `.claude/tasks.md` for full detail).
+TASK-011 — Full-system demo activity (spread dates across a month + populate Partnership/Setup/
+Treasury, not just Dormitory) and a page-wide "demo data active" indicator. Parent Request:
+REQ-006. `seedRandomDormitoryData()` gained `spreadOverDays` and `fullSystemActivity` options; every
+page now shows a live banner/badge while seeded demo data is active (see `.claude/tasks.md` for
+full detail).
 
 ## Status
-COMPLETED (all of TASK-001 through TASK-010)
+COMPLETED (all of TASK-001 through TASK-011)
+
+## Summary of TASK-011 (see `.claude/tasks.md` for full acceptance criteria / validation detail)
+- `js/data.js`: `seedRandomDormitoryData()` gained `spreadOverDays` (residents/payments/guests/
+  expenses get randomized dates across the last N days instead of always "today") and
+  `fullSystemActivity` (per-partner capital contributions, advances + optional repayments, one
+  asset purchase, and profit distributions — all tagged `SEEDED_DEMO_MARKER`). Sets
+  `settings.demoDataActive = true` on completion. `resetDormitoryOnly()` extended to remove
+  `SEEDED_DEMO_MARKER`-tagged transactions/assets and sets `demoDataActive = false`.
+- `js/settings.js`: options modal gained a "نشاط شهر كامل عبر كل صفحات النظام" toggle + spread-days
+  input; panel/confirm/toast copy rewritten for whole-system scope instead of dormitory-only.
+- `js/app.js`: new `demoDataBannerHTML()` (top-of-page warning while demo data is active) and
+  `updateDevBadge()` (dynamic sidebar badge text), both wired into `router()` so they update on
+  every navigation without a full reload.
 
 ## Summary of TASK-010 (see `.claude/tasks.md` for full acceptance criteria / validation detail)
 - `js/data.js`: `seedRandomDormitoryData(options = {})` — every previously-hardcoded value is now
@@ -122,23 +135,26 @@ user to revoke it afterward) in `CLAUDE.md`'s "Browser Project / Git Availabilit
 answer given mid-session that wrongly implied browser chat could never push to GitHub at all.
 
 ## Current Work
-None — TASK-010 completed in the same session it was requested.
+None — TASK-011 completed in the same session it was requested.
 
 ## Remaining Work
 None queued. Item #9 from an earlier review (a Partnership/Finance equivalent of the Dormitory
-seeder) was explicitly deferred by the user and remains out of scope. Also still not started:
-extend the required/paid/surplus contribution pattern to the Dashboard's own partner mini-cards
-(currently only the Partners page shows it in full) — unrelated pre-existing follow-up.
+seeder) is now effectively superseded by TASK-011's `fullSystemActivity` option, which already
+covers Partnership (capital/advances/distributions). Still not started: extending the
+required/paid/surplus contribution pattern to the Dashboard's own partner mini-cards — unrelated
+pre-existing follow-up.
 
 ## Known Limitation From This Session
 No browser/UI tool was available in this session to click through the app live. Validation for
-TASK-010 was `node --check` plus a Node `vm`-based runtime harness exercising
-`seedRandomDormitoryData(options)` across four option combinations and 5 no-args backward-
-compatibility runs (see `.claude/tasks.md` TASK-010 for exact assertions). The user should do a
-quick manual smoke test: Settings → "الغرف والأسرة" → "تحكم وتعبئة عشوائية للتجربة" → confirm the
-form opens, the occupancy slider updates its live label, submitting it shows the confirmation
-dialog, and the resulting seed matches the chosen occupancy/structure/toggles (e.g. try 50%
-occupancy with services/guests/expenses all unchecked and confirm none of those get created).
+TASK-011 was `node --check` plus a Node `vm`-based runtime harness exercising the new
+`spreadOverDays`/`fullSystemActivity` options and reset scoping (see `.claude/tasks.md` TASK-011
+for exact assertions). The user should do a quick manual smoke test: Settings → "الغرف والأسرة" →
+open the options form, check "نشاط شهر كامل", submit, and confirm — then check that (a) a warning
+banner appears at the top of every page while the seeded data is present, (b) the sidebar's "نسخة
+تجريبية" badge switches to the more explicit warning message, (c) Partnership/Setup/Treasury pages
+show the new seeded contributions/advances/asset/distribution, and (d) after "إعادة تهيئة
+الداخلية" both the banner and badge revert and everything seeded (including the new transaction
+types) is gone while any real data entered manually survives.
 
 ## Changed Files (TASK-004 only)
 - `.claude/requests.md` (new)

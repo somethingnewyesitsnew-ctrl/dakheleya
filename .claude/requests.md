@@ -234,3 +234,43 @@ running the seed, replacing the previous one-click fixed-100% button. Validated 
 plus a runtime Node `vm`-based smoke test across four distinct option combinations (including 0%
 and 100% occupancy, all-extras-off, and a 2x expense multiplier) plus 5 no-args runs confirming
 backward compatibility.
+
+---
+
+## REQ-006
+
+Date: See `git log` for the commit date of TASK-011.
+
+Original Request Summary: (Arabic dialect, paraphrased) "موضوع التعبئة دا عاوزو يملا السيستم عديل
+و يكتب لي انع دي نسخة تجريبية ما بس منطقة التعبيئة ... يعمل لي سامل شهر كامل في كل صفحات السيبستم"
+— the user wants the seeding feature to properly fill the whole system (not just the Dormitory
+area), to make it clear everywhere (not just the settings/seeding screen) that the visible data is
+a trial/demo version, and to simulate a full month of activity across every page of the system.
+
+Objective: Extend the TASK-010 parameterized seeder so it can (a) spread dates across a
+configurable period instead of always "today", (b) also populate Partnership (capital
+contributions, advances/repayments, distributions), Setup/تجهيز (an asset purchase), and Treasury
+— not just the Dormitory hierarchy — and (c) make the presence of active demo data visible on every
+page, not only inside the seeding settings panel.
+
+Status: COMPLETED
+
+Related Task IDs: TASK-011
+
+Completed Tasks:
+- TASK-011 — see `.claude/tasks.md` for full detail.
+
+Current Task: None — TASK-011 completed in the same session it was requested.
+
+Remaining Tasks: None queued for this REQ.
+
+Final Outcome: `js/data.js` gained `spreadOverDays` (date-spreading across residents/payments/
+guests/expenses) and `fullSystemActivity` (partner capital contributions, advances/repayments, an
+asset purchase, and profit distributions, all tagged via a new `SEEDED_DEMO_MARKER`) options on
+`seedRandomDormitoryData()`, plus a `settings.demoDataActive` flag toggled by seeding/reset.
+`resetDormitoryOnly()` extended to remove the new marker's records while preserving real data.
+`js/settings.js`'s options modal exposes both new options; panel/confirmation/toast copy rewritten
+for whole-system scope. `js/app.js` gained a page-top warning banner and a dynamic sidebar badge,
+both reading `demoDataActive` live on every navigation via `router()`. Validated via `node --check`
+plus a runtime Node `vm` harness covering date-spreading, full-system-activity generation, reset
+scoping (real vs. seeded data), and backward compatibility of no-args/TASK-010-only calls.

@@ -1480,12 +1480,17 @@ const DataService = {
     // ثابت: العلامة المستخدمة لتمييز المصروفات التي ولّدها هذا المولّد تلقائياً، عشان
     // resetDormitoryOnly() يقدر يشيلها بدقة دون المساس بأي مصروف حقيقي أدخله المستخدم يدوياً.
     SEEDED_EXPENSE_MARKER: 'النظام (بيانات تجريبية للداخلية)',
+    // علامة ثانية لأي معاملة/أصل تولّده "نشاط الشهر الكامل" (مساهمات، سلف، توزيعات، أصول) —
+    // منفصلة عن علامة المصروفات عشان resetDormitoryOnly() يقدر يشيل كل نوع بدقة.
+    SEEDED_DEMO_MARKER: 'النظام (نشاط شهر تجريبي كامل)',
 
     // يولّد هيكل داخلية عشوائي كامل (طوابق ← شقق ← غرف ← أسرة) حسب "options" اللي يحددها
     // المستخدم (نطاق عدد الطوابق/الشقق/الغرف، نسبة الإشغال، نسبة الدفع، تفعيل/تعطيل الضيفات
-    // والخدمات والمصروفات...)، بدل قيم ثابتة في الكود. أي قيمة غير مُمرَّرة تأخذ نفس الافتراضي
-    // القديم (إشغال 100%، هيكل متوسط) عشان الاستدعاء بدون options يبقى بنفس السلوك السابق.
-    // مخصص للتجربة فقط، ولا يمس الشركاء أو الإعدادات المالية العامة.
+    // والخدمات والمصروفات، الانتشار الزمني عبر عدة أيام، وتفعيل نشاط شهر كامل عبر كل صفحات
+    // النظام: مساهمات رأس مال، سلف شركاء، توزيع أرباح، شراء أصل...)، بدل قيم ثابتة في الكود.
+    // أي قيمة غير مُمرَّرة تأخذ نفس الافتراضي القديم (إشغال 100%، تاريخ اليوم فقط، بدون نشاط
+    // شهر كامل) عشان الاستدعاء بدون options يبقى بنفس السلوك السابق بالضبط.
+    // مخصص للتجربة فقط، ولا يمس الشركاء أنفسهم أو الإعدادات المالية العامة.
     seedRandomDormitoryData(options = {}) {
         const opts = {
             floorsMin: Math.max(1, Number(options.floorsMin) || 2),
@@ -1503,7 +1508,15 @@ const DataService = {
             generateServices: options.generateServices !== undefined ? !!options.generateServices : true,
             serviceSubscribePercent: Math.min(100, Math.max(0, options.serviceSubscribePercent !== undefined ? Number(options.serviceSubscribePercent) : 35)),
             generateExpenses: options.generateExpenses !== undefined ? !!options.generateExpenses : true,
-            expensePercentMultiplier: Math.max(0, options.expensePercentMultiplier !== undefined ? Number(options.expensePercentMultiplier) : 1)
+            expensePercentMultiplier: Math.max(0, options.expensePercentMultiplier !== undefined ? Number(options.expensePercentMultiplier) : 1),
+            // انتشار زمني: كل التواريخ (تسكين، دفعات، مصروفات) توزَّع عشوائياً خلال آخر N يوم
+            // بدل ما تكون كلها "اليوم" فقط — عشان الرسوم البيانية وسجل النشاط يعكسوا شهراً
+            // كاملاً من الحركة بدل لقطة يوم واحد. الافتراضي 0 = نفس السلوك القديم (اليوم فقط).
+            spreadOverDays: Math.max(0, Number(options.spreadOverDays) || 0),
+            // نشاط شهر كامل عبر كل صفحات النظام: مساهمات رأس مال، سلف شركاء وسداد جزئي،
+            // شراء أصل، وتوزيع أرباح — كل ده مُعلَّم بعلامة منفصلة (SEEDED_DEMO_MARKER) عشان
+            // إعادة التهيئة تقدر تشيله بدقة دون المساس بأي معاملة حقيقية.
+            fullSystemActivity: options.fullSystemActivity !== undefined ? !!options.fullSystemActivity : false
         };
         // نضمن إن الحد الأقصى ما يقلّش عن الحد الأدنى (لو المستخدم كتب أرقام مقلوبة بالغلط)
         if (opts.floorsMax < opts.floorsMin) opts.floorsMax = opts.floorsMin;
@@ -1526,6 +1539,22 @@ const DataService = {
         const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
         const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
         const randPhone = () => '09' + String(rand(10000000, 99999999));
+        // تاريخ عشوائي بين (اليوم - daysBack) واليوم نفسه، أو اليوم فقط لو daysBack = 0
+        const randomPastDate = (daysBack) => {
+            if (!daysBack) return Utils.todayISO();
+            const d = new Date();
+            d.setDate(d.getDate() - rand(0, daysBack));
+            return d.toISOString().slice(0, 10);
+        };
+        // تاريخ عشوائي بعد تاريخ مُعطى وحتى اليوم (لتواريخ الدفعات بعد تاريخ التسكين مثلاً)
+        const randomDateAfter = (fromDateStr) => {
+            const from = new Date(fromDateStr);
+            const today = new Date();
+            const maxDays = Math.max(0, Math.round((today - from) / (1000*60*60*24)));
+            const d = new Date(from);
+            d.setDate(d.getDate() + rand(0, maxDays));
+            return d.toISOString().slice(0, 10);
+        };
 
         const floorsCount = rand(opts.floorsMin, opts.floorsMax);
         let createdBeds = [];
@@ -1563,6 +1592,7 @@ const DataService = {
         for (let i = 0; i < bedsToFill; i++) {
             const bed = shuffled[i];
             const room = this.getRoom(bed.roomId);
+            const checkInDate = randomPastDate(opts.spreadOverDays);
             const resident = this.addResident({
                 name: `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`,
                 phone: randPhone(),
@@ -1575,7 +1605,7 @@ const DataService = {
                 motherPhone: randPhone(),
                 motherJob: pick(['ربة منزل','معلمة','موظفة','طبيبة']),
                 roomId: room.id, roomNumber: room.number, bedId: bed.id, bedNumber: bed.number,
-                checkIn: Utils.todayISO(), monthlyRent: room.price || basePrice,
+                checkIn: checkInDate, monthlyRent: room.price || basePrice,
                 paymentStatus: 'مستحق', notes: 'بيانات تجريبية (تم توليدها تلقائياً)'
             });
             residentsCreated++;
@@ -1583,7 +1613,8 @@ const DataService = {
             if (rand(1, 100) <= opts.paymentPercent) {
                 const full = rand(1, 100) <= opts.fullPaymentPercent;
                 const amount = full ? resident.monthlyRent : Math.max(Math.round(resident.monthlyRent * (rand(30, 80) / 100)), 1);
-                this.addResidentPayment(resident.id, { amount, method: pick(['نقدي','تحويل بنكي']) });
+                const paymentDate = opts.spreadOverDays ? randomDateAfter(checkInDate) : Utils.todayISO();
+                this.addResidentPayment(resident.id, { date: paymentDate, amount, method: pick(['نقدي','تحويل بنكي']) });
                 totalRevenueCollected += amount;
             }
         }
@@ -1616,11 +1647,12 @@ const DataService = {
             const createdGuestIds = [];
             for (let i = 0; i < guestCount; i++) {
                 const host = pick(activeResidents);
-                const checkOutDate = new Date();
+                const checkInDate = randomPastDate(opts.spreadOverDays);
+                const checkOutDate = new Date(checkInDate);
                 checkOutDate.setDate(checkOutDate.getDate() + rand(1, 5));
                 const guest = this.addGuest({
                     name: `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`, hostResidentId: host.id, phone: randPhone(),
-                    checkIn: Utils.todayISO(), checkOut: checkOutDate.toISOString().slice(0, 10), dailyRate: 50000
+                    checkIn: checkInDate, checkOut: checkOutDate.toISOString().slice(0, 10), dailyRate: 50000
                 });
                 if (guest && guest.id) createdGuestIds.push(guest.id);
                 guestsCreated++;
@@ -1649,8 +1681,8 @@ const DataService = {
             { category: 'المشتريات', min: 0.01, max: 0.04 }
         ];
         let expensesCreated = 0, totalExpensesSeeded = 0;
+        const partnersNames = this.getPartners().map(p => p.name);
         if (opts.generateExpenses) {
-            const partnersNames = this.getPartners().map(p => p.name);
             // نضمن قاعدة إيراد معقولة حتى لو محدش دفع فعلياً (عشان المصروفات ما تفضلش صفر)
             const revenueBase = Math.max(totalRevenueCollected, residentsCreated * basePrice * 0.5, basePrice);
 
@@ -1659,7 +1691,7 @@ const DataService = {
                     const pct = (def.min + Math.random() * (def.max - def.min)) * opts.expensePercentMultiplier;
                     const amount = Math.max(Math.round(revenueBase * pct), 5000);
                     this.addExpense({
-                        date: Utils.todayISO(),
+                        date: randomPastDate(opts.spreadOverDays),
                         category: def.category,
                         amount,
                         chargedAmount: amount,
@@ -1677,23 +1709,118 @@ const DataService = {
             });
         }
 
+        // ---------------- نشاط شهر كامل عبر كل صفحات النظام (اختياري) ----------------
+        // مساهمات رأس مال، سلف شركاء (مع سداد جزئي أحياناً)، شراء أصل، وتوزيع أرباح — كل ده
+        // موزَّع على مدار الفترة الزمنية (spreadOverDays)، عشان صفحات "الشراكة" و"التأسيس
+        // والتجهيز" و"الخزينة" ولوحة التحكم تعكس فعلاً حركة شهر كامل، مش بس هيكل الداخلية.
+        let capitalContributed = 0, advancesCreated = 0, repaymentsCreated = 0, assetsCreated = 0, distributionsCreated = 0, distributionsTotal = 0;
+        if (opts.fullSystemActivity) {
+            const partners = this.getPartners();
+            const spread = opts.spreadOverDays || 30; // لو النشاط الكامل مفعّل بدون انتشار زمني، نفترض شهراً عشان يبقى له معنى
+
+            partners.forEach(p => {
+                // مساهمة رأس مال: تجاه المساهمة المطلوبة لو محددة، وإلا مبلغ عشوائي معقول
+                const targetContribution = Number(p.requiredContribution) > 0
+                    ? Number(p.requiredContribution)
+                    : rand(2000000, 5000000);
+                const contributionAmount = Math.round(targetContribution * (rand(60, 100) / 100));
+                if (contributionAmount > 0) {
+                    this.addTransaction({
+                        date: randomPastDate(spread), description: `مساهمة رأس مال — ${p.name} (بيانات تجريبية)`,
+                        type: 'مساهمة رأس مال', category: 'رأس مال تأسيسي', amount: contributionAmount,
+                        partner: p.name, paymentSource: pick(['نقدي','تحويل بنكي']), status: 'مسجلة',
+                        createdBy: this.SEEDED_DEMO_MARKER, notes: 'بيانات تجريبية (نشاط شهر كامل)'
+                    });
+                    capitalContributed += contributionAmount;
+                }
+
+                // سلفة شريك، مع فرصة 50% لسداد جزء منها لاحقاً في نفس الفترة
+                if (Math.random() < 0.7) {
+                    const advanceDate = randomPastDate(spread);
+                    const advanceAmount = rand(200000, 800000);
+                    this.addTransaction({
+                        date: advanceDate, description: `سلفة شريك — ${p.name} (بيانات تجريبية)`,
+                        type: 'سلفة شريك', category: 'سلفة للشراكة', amount: advanceAmount,
+                        partner: p.name, paymentSource: pick(['نقدي','تحويل بنكي']), status: 'مسجلة',
+                        createdBy: this.SEEDED_DEMO_MARKER, notes: 'بيانات تجريبية (نشاط شهر كامل)'
+                    });
+                    advancesCreated++;
+                    if (Math.random() < 0.5) {
+                        const repayAmount = Math.round(advanceAmount * (rand(30, 70) / 100));
+                        this.addTransaction({
+                            date: randomDateAfter(advanceDate), description: `سداد سلفة — ${p.name} (بيانات تجريبية)`,
+                            type: 'سداد سلفة', category: 'سداد سلفة شريك', amount: repayAmount,
+                            partner: p.name, paymentSource: pick(['نقدي','تحويل بنكي']), status: 'مسجلة',
+                            createdBy: this.SEEDED_DEMO_MARKER, notes: 'بيانات تجريبية (نشاط شهر كامل)'
+                        });
+                        repaymentsCreated++;
+                    }
+                }
+            });
+
+            // شراء أصل واحد على الأقل (يظهر في التأسيس والتجهيز + الأصول)
+            if (Math.random() < 0.8) {
+                const ASSET_SEED_DEFS = [
+                    { name: 'أسرّة إضافية', category: 'الأسرة' }, { name: 'مراتب', category: 'المراتب' },
+                    { name: 'مكيفات هواء', category: 'المكيفات' }, { name: 'أثاث غرف الطالبات', category: 'الأثاث' }
+                ];
+                const def = pick(ASSET_SEED_DEFS);
+                const qty = rand(2, 10);
+                const cost = qty * rand(50000, 300000);
+                this.addAsset({
+                    name: `${def.name} (بيانات تجريبية)`, category: def.category, quantity: qty,
+                    purchaseCost: cost, purchaseDate: randomPastDate(spread),
+                    paidBy: partnersNames.length ? pick(partnersNames) : '', condition: 'جيدة',
+                    location: 'المخزن الرئيسي', createdBy: this.SEEDED_DEMO_MARKER
+                });
+                assetsCreated++;
+            }
+
+            // توزيع أرباح للشهر الحالي لو فيه أرباح قابلة للتوزيع فعلاً
+            const currentMonth = Utils.monthKey(Utils.todayISO());
+            const profitCalc = this.calculateProfit(currentMonth, { reserve: settings.operatingReserveDefault || 0 });
+            if (profitCalc.distributable > 0) {
+                partners.forEach(p => {
+                    const share = profitCalc.shares[p.name] || 0;
+                    if (share <= 0) return;
+                    const paidShare = Math.round(share * (rand(40, 100) / 100));
+                    if (paidShare <= 0) return;
+                    this.addTransaction({
+                        date: Utils.todayISO(), description: `توزيع أرباح ${Utils.monthLabel(currentMonth)} — ${p.name} (بيانات تجريبية)`,
+                        type: 'توزيع أرباح', category: 'توزيع أرباح شهري', amount: paidShare,
+                        partner: p.name, paymentSource: pick(['نقدي','تحويل بنكي']), status: 'مسجلة',
+                        createdBy: this.SEEDED_DEMO_MARKER, notes: 'بيانات تجريبية (نشاط شهر كامل)'
+                    });
+                    distributionsCreated++;
+                    distributionsTotal += paidShare;
+                });
+            }
+        }
+
+        // نعلّم في الإعدادات إن فيه بيانات تجريبية نشطة حالياً — تُستخدم لعرض تنبيه واضح في
+        // كل صفحات النظام (مش بس داخل شاشة الإعدادات) طالما البيانات دي موجودة.
+        this.saveSettings({ demoDataActive: true });
+
         const summary = {
             floors: floorsCount, apartments: apartmentsCount, rooms: roomsCount, beds: createdBeds.length,
-            occupiedBeds: bedsToFill, occupancyPercent: opts.occupancyPercent,
+            occupiedBeds: bedsToFill, occupancyPercent: opts.occupancyPercent, spreadOverDays: opts.spreadOverDays,
             residents: residentsCreated, guests: guestsCreated, vacations: vacationsCreated,
-            servicesAssigned, expenses: expensesCreated, revenueCollected: totalRevenueCollected, expensesTotal: totalExpensesSeeded
+            servicesAssigned, expenses: expensesCreated, revenueCollected: totalRevenueCollected, expensesTotal: totalExpensesSeeded,
+            fullSystemActivity: opts.fullSystemActivity, capitalContributed, advancesCreated, repaymentsCreated,
+            assetsCreated, distributionsCreated, distributionsTotal
         };
         this.addActivity({
-            user, action: `ولّد بيانات داخلية عشوائية للتجربة (إشغال ${opts.occupancyPercent}% حسب الإعدادات المختارة)`,
-            entity: `${summary.floors} طابق، ${summary.apartments} شقة، ${summary.rooms} غرفة، ${summary.residents} طالبة (${opts.occupancyPercent}% إشغال)، ${summary.expenses} بند مصروف`
+            user, action: `ولّد بيانات تجريبية للنظام (إشغال ${opts.occupancyPercent}%${opts.fullSystemActivity ? ' + نشاط شهر كامل عبر كل الصفحات' : ''})`,
+            entity: `${summary.floors} طابق، ${summary.apartments} شقة، ${summary.rooms} غرفة، ${summary.residents} طالبة، ${summary.expenses} بند مصروف${opts.fullSystemActivity ? `، ${summary.advancesCreated} سلفة، ${summary.assetsCreated} أصل، ${summary.distributionsCreated} توزيع` : ''}`
         });
         return summary;
     },
 
-    // إعادة تهيئة الداخلية فقط من الصفر: يمسح الطوابق/الشقق/الغرف/الأسرة/الطالبات/الضيفات/الخدمات/
-    // الإجازات/تغييرات التسكين، وأي إيرادات ناتجة عنها، بالإضافة إلى المصروفات التي ولّدها مولّد
-    // البيانات التجريبية تحديداً (يُعرَف عبر SEEDED_EXPENSE_MARKER) — دون المساس بالشركاء أو
-    // إعدادات المالية العامة أو أي مصروف حقيقي أدخله المستخدم بنفسه أو الأصول.
+    // إعادة تهيئة الداخلية والبيانات التجريبية المرتبطة بها من الصفر: يمسح الطوابق/الشقق/
+    // الغرف/الأسرة/الطالبات/الضيفات/الخدمات/الإجازات/تغييرات التسكين، وأي إيرادات ناتجة عنها،
+    // بالإضافة إلى المصروفات التي ولّدها مولّد البيانات التجريبية (SEEDED_EXPENSE_MARKER) وأي
+    // معاملات/أصول ولّدها "نشاط الشهر الكامل" (SEEDED_DEMO_MARKER) — دون المساس بالشركاء أو
+    // إعدادات المالية العامة أو أي بيانات حقيقية أدخلها المستخدم بنفسه.
     // مخصص لإعادة الاختبار من جديد بعد "تعبئة عشوائية للتجربة".
     resetDormitoryOnly() {
         const user = Utils.currentUserName();
@@ -1712,9 +1839,12 @@ const DataService = {
         StorageService.set(STORAGE_KEYS.vacations, []);
         StorageService.set(STORAGE_KEYS.transfers, []);
 
-        // إزالة إيرادات الداخلية المرتبطة بالطالبات/الضيفات/الخدمات فقط (تبقى أي معاملات أخرى — رأس مال، سلف، مصروفات... — كما هي)
+        // إزالة إيرادات الداخلية المرتبطة بالطالبات/الضيفات/الخدمات، وأي معاملات ولّدها نشاط
+        // الشهر الكامل (مساهمات/سلف/سداد/توزيعات تجريبية) — تبقى أي معاملة حقيقية أدخلها
+        // المستخدم بنفسه كما هي تماماً.
         const remainingTransactions = (StorageService.get(STORAGE_KEYS.transactions) || [])
-            .filter(t => !(t.type === 'إيراد' && DORM_REVENUE_CATEGORIES.includes(t.category)));
+            .filter(t => !(t.type === 'إيراد' && DORM_REVENUE_CATEGORIES.includes(t.category)))
+            .filter(t => t.createdBy !== this.SEEDED_DEMO_MARKER);
         StorageService.set(STORAGE_KEYS.transactions, remainingTransactions);
 
         // إزالة المصروفات التي ولّدها مولّد البيانات التجريبية فقط (عبر createdBy marker) —
@@ -1723,10 +1853,16 @@ const DataService = {
             .filter(e => e.createdBy !== this.SEEDED_EXPENSE_MARKER);
         StorageService.set(STORAGE_KEYS.expenses, remainingExpenses);
 
-        this.saveSettings({ roomsCount: 0, bedsCount: 0 });
-        this.addActivity({ user, action: 'أعاد تهيئة الداخلية بالكامل من الصفر', entity: 'دون التأثير على الشركاء أو الإعدادات المالية العامة أو المصروفات الحقيقية' });
+        // إزالة الأصول التي ولّدها نشاط الشهر الكامل فقط — أي أصل حقيقي أضافه المستخدم يبقى كما هو.
+        const remainingAssets = (StorageService.get(STORAGE_KEYS.assets) || [])
+            .filter(a => a.createdBy !== this.SEEDED_DEMO_MARKER);
+        StorageService.set(STORAGE_KEYS.assets, remainingAssets);
+
+        this.saveSettings({ roomsCount: 0, bedsCount: 0, demoDataActive: false });
+        this.addActivity({ user, action: 'أعاد تهيئة الداخلية والبيانات التجريبية المرتبطة بها بالكامل من الصفر', entity: 'دون التأثير على الشركاء أو الإعدادات المالية العامة أو أي بيانات حقيقية' });
     }
 };
+
 
 /* ==========================================================================
    بيانات تجريبية أولية (Seed Data)

@@ -116,7 +116,7 @@ function renderShell() {
                     <div class="brand-sub">نظام إدارة الشراكة والداخلية</div>
                 </div>
             </div>
-            <div class="dev-badge"><i class="bi bi-info-circle me-1"></i> نسخة تجريبية — البيانات محفوظة محلياً على هذا الجهاز</div>
+            <div class="dev-badge" id="dev-badge"><i class="bi bi-info-circle me-1"></i> نسخة تجريبية — البيانات محفوظة محلياً على هذا الجهاز</div>
             <nav class="sidebar-nav" id="sidebar-nav"></nav>
         </aside>
 
@@ -349,7 +349,34 @@ function router() {
     } else {
         container.innerHTML = `<div class="empty-state"><i class="bi bi-tools"></i><div>هذه الصفحة قيد الإنشاء</div></div>`;
     }
+    // تنبيه ثابت في أعلى كل صفحة طالما فيه بيانات تجريبية نشطة حالياً (تم توليدها عبر
+    // "تحكم وتعبئة عشوائية للتجربة") — عشان يكون واضح في كل مكان بالنظام (مش بس شاشة
+    // الإعدادات) إن البيانات المعروضة تجريبية وليست حقيقية.
+    const banner = demoDataBannerHTML();
+    if (banner) container.insertAdjacentHTML('afterbegin', banner);
+    updateDevBadge();
     window.scrollTo(0, 0);
+}
+
+// نص التنبيه اللي يظهر أعلى كل صفحة طالما DataService.getSettings().demoDataActive === true
+function demoDataBannerHTML() {
+    if (!DataService.getSettings().demoDataActive) return '';
+    return `
+    <div class="alert alert-warning d-flex align-items-center gap-2 mb-3" style="font-size:13px;">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span><b>نسخة تجريبية</b> — البيانات المعروضة الآن (طالبات، مصروفات، معاملات...) تم توليدها تلقائياً للتجربة وليست بيانات حقيقية. يمكن حذفها من الإعدادات ← الغرف والأسرة ← "إعادة تهيئة الداخلية".</span>
+    </div>`;
+}
+
+// يحدّث نص شارة "نسخة تجريبية" في الشريط الجانبي حسب وجود بيانات تجريبية نشطة أو لا
+function updateDevBadge() {
+    const badges = document.querySelectorAll('.dev-badge');
+    const active = DataService.getSettings().demoDataActive;
+    badges.forEach(b => {
+        b.innerHTML = active
+            ? `<i class="bi bi-exclamation-triangle-fill me-1"></i> نسخة تجريبية — بيانات تجريبية مُولَّدة نشطة حالياً`
+            : `<i class="bi bi-info-circle me-1"></i> نسخة تجريبية — البيانات محفوظة محلياً على هذا الجهاز`;
+    });
 }
 
 window.addEventListener('hashchange', router);

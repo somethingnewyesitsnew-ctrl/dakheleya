@@ -371,7 +371,71 @@ Checkpoint Created: State files updated (this entry, `tasks.md`, `current-task.m
 `requests.md`, `project-state.md`) and committed locally in the session's clone. **Not pushed** —
 no GitHub token was supplied and no push was requested this session.
 
-Ending Status: COMPLETED (TASK-010 / REQ-005), pending the user's manual smoke test and, if wanted,
+Ending Status: COMPLETED (TASK-010 / REQ-005). Later in this same chat, a push was requested and
+completed — see SESSION-009 below.
+
+Exact Next Action: See `.claude/handoff.md` (superseded by SESSION-009 below).
+
+---
+
+## SESSION-009
+
+Date: See `git log` for the TASK-011 commit and the TASK-010 push.
+
+Environment: Same Claude.ai browser chat as SESSION-008 (continued conversation, same sandbox).
+The user first supplied a GitHub token to push TASK-010; that token failed with a 403 permission
+error (`remote: Permission to somethingnewyesitsnew-ctrl/dakheleya.git denied` — the token was
+valid but lacked write access to this repo). The token was stripped from the local remote
+immediately after the failed attempt. The user then supplied a second token, which succeeded:
+push confirmed via the actual output line `505097d..8771ae0 main -> main`; that token was also
+stripped from the local remote immediately after use, and the user was reminded in-chat to treat
+both pasted tokens as no longer secret and to revoke them.
+
+Starting Checkpoint: `8771ae0` (TASK-010, freshly pushed to `origin/main` in this same session).
+
+Active REQ: REQ-006 (new).
+
+Active TASK: TASK-011.
+
+Work Completed: The user asked (Arabic dialect) for the seeder to properly fill the whole system —
+not just Dormitory — and to make it clear everywhere, not only in the seeding screen, that visible
+data is a trial/demo version, simulating a full month of activity across every page. Implemented:
+(1) `spreadOverDays` option on `seedRandomDormitoryData()` — resident check-in dates, payment
+dates, guest stays, and expense dates are now randomized across the last N days instead of always
+"today", via new `randomPastDate()`/`randomDateAfter()` helpers; (2) `fullSystemActivity` option —
+generates per-partner capital contributions (toward `requiredContribution` when set), an advance
+with a 50% chance of a partial repayment, one asset purchase, and profit distributions when
+`calculateProfit()` shows distributable profit, all dated across the same period and tagged with a
+new `SEEDED_DEMO_MARKER` constant; (3) `resetDormitoryOnly()` extended to remove
+`SEEDED_DEMO_MARKER`-tagged transactions/assets; (4) a `settings.demoDataActive` flag, set `true` on
+seeding and `false` on reset; (5) in `js/app.js`, a new page-top warning banner
+(`demoDataBannerHTML()`) and a dynamic sidebar badge (`updateDevBadge()`), both wired into
+`router()` so every page reflects the flag live on every navigation; (6) `js/settings.js`'s options
+modal gained the "نشاط شهر كامل" toggle and a spread-days input, with copy rewritten for
+whole-system scope.
+
+Files Changed: `js/data.js`, `js/settings.js`, `js/app.js`.
+
+Validation Performed: `node --check` on all three touched files (passed). Runtime smoke test: a
+Node `vm`-based harness (`/tmp/smoketest/harness2.js`, scratch-only) using the app's own
+auto-seeded default partners, calling `seedRandomDormitoryData({ spreadOverDays: 30,
+fullSystemActivity: true, ... })` and asserting exactly one capital-contribution transaction per
+partner, resident check-in/expense dates spanning multiple distinct days, `settings.demoDataActive`
+becoming `true`; then adding one real manual transaction and one real manual asset, running
+`resetDormitoryOnly()`, and asserting every `SEEDED_DEMO_MARKER`/`SEEDED_EXPENSE_MARKER`-tagged
+record was removed while both real records survived, occupancy cleared, and `demoDataActive` became
+`false`. Also re-ran a no-args call (confirming `spreadOverDays`/`fullSystemActivity` default off,
+matching the exact prior TASK-010 behavior) and re-ran TASK-010's four-option-combination plus
+5×no-args harnesses as a regression check — all passed. One test-harness mistake (not a product
+bug) was found and fixed mid-validation: the harness initially added two *new* partners named
+`أيمن`/`الفاضل` on top of the two the app's own `seedDemoData()` already creates at load, inflating
+transaction-count assertions; fixed by reusing the auto-seeded partners.
+
+Checkpoint Created: State files updated (this entry, `tasks.md`, `current-task.md`, `handoff.md`,
+`requests.md`, `project-state.md`) and committed locally in the session's clone. **Not pushed as of
+this checkpoint** — no token has been supplied for this part of the session yet.
+
+Ending Status: COMPLETED (TASK-011 / REQ-006), pending the user's manual smoke test and, if wanted,
 a request to push to `origin/main`.
 
 Exact Next Action: See `.claude/handoff.md`.

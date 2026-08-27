@@ -21,9 +21,10 @@ Architecture:
   to 9 top-level items (Dashboard, Partnership, Dormitory, Finance, Setup, Review, Tools, Reports, Settings)
 
 Current Phase: Workflow finalized under REQ-001 (TASK-001–006). REQ-002/TASK-007, REQ-003/TASK-008,
-REQ-004/TASK-009, and REQ-005/TASK-010 are real application-feature work done under this system: a
-dormitory test-data seeder that produces a coherent, profit/expense-bearing demo state, now fully
-parameterized and put behind a user-facing options form instead of a fixed one-click action.
+REQ-004/TASK-009, REQ-005/TASK-010, and REQ-006/TASK-011 are real application-feature work done
+under this system: a dormitory test-data seeder, now fully parameterized (structure, occupancy,
+date-spreading) and able to populate Partnership/Setup/Treasury activity across a full simulated
+month — not just the Dormitory area — with a page-wide indicator whenever demo data is active.
 
 Overall Status: Healthy. App is functional. Workflow/feature history:
 - TASK-001 (+ DECISION-002): installed the workflow scaffold, extended with task planning and a
@@ -52,9 +53,15 @@ Overall Status: Healthy. App is functional. Workflow/feature history:
   now opens a form/modal (with a live occupancy slider) before running the seed, instead of a fixed
   one-click 100%-occupancy button. Committed locally; not yet pushed (no token supplied this
   session).
+- TASK-011 (REQ-006): seeder gained `spreadOverDays` (dates spread across a configurable period
+  instead of always "today") and `fullSystemActivity` (per-partner capital contributions, advances/
+  repayments, an asset purchase, and profit distributions — populating Partnership/Setup/Treasury,
+  not just Dormitory), all tagged via a new `SEEDED_DEMO_MARKER` for precise reset cleanup. Added a
+  `settings.demoDataActive` flag with a page-top warning banner and a dynamic sidebar badge that
+  reflect it live on every navigation. Committed locally; not yet pushed.
 
-Active Task: None — TASK-001 through TASK-010 all COMPLETED. Awaiting the user's manual smoke-test
-feedback, or the next request (see `.claude/requests.md` for REQ-005's status and `.claude/tasks.md`
+Active Task: None — TASK-001 through TASK-011 all COMPLETED. Awaiting the user's manual smoke-test
+feedback, or the next request (see `.claude/requests.md` for REQ-006's status and `.claude/tasks.md`
 for the task queue).
 
 Environment Note: This project may be accessed either via a local Claude Code checkout with Git CLI,

@@ -498,6 +498,104 @@ tool was available in this session — see Known Limitation in `.claude/current-
 
 ---
 
+## TASK-011
+Parent Request: REQ-006
+Title: Full-system demo activity — spread dates across a month + populate every module, not just the
+dormitory area; make demo-data status visible on every page
+Status: COMPLETED
+Priority: Normal (testing/demo tooling improvement)
+Description: The user said (Arabic, paraphrased): "the seeding should fill the system properly, and
+should tell me clearly this is a trial/demo version — not just in the seeding area — do a full
+month's worth of activity across every page of the system." Extended `seedRandomDormitoryData()`
+(TASK-010's parameterized seeder) with two more options:
+1. `spreadOverDays` (default 0, backward-compatible): when > 0, resident check-in dates, resident
+   payment dates, guest stays, and operating-expense dates are each randomized within the last N
+   days instead of always being "today" — so charts and reports show a genuine month of activity
+   instead of a single-day snapshot.
+2. `fullSystemActivity` (default false, backward-compatible): when true, also generates — spread
+   across the same period — per-partner capital contribution transactions (toward
+   `requiredContribution` when set), a partner advance with a 50% chance of a partial repayment, one
+   asset purchase, and a profit distribution for the current month if `calculateProfit()` shows
+   distributable profit — so the Partnership, Setup/تجهيز, and Treasury pages (not just Dormitory)
+   show real seeded activity too. All of these are tagged with a new `SEEDED_DEMO_MARKER` constant
+   (separate from TASK-009's `SEEDED_EXPENSE_MARKER`, which stays scoped to expenses only) so
+   `resetDormitoryOnly()` can remove exactly these — and nothing a real user entered — precisely.
+Also added a persistent, page-wide "demo data active" indicator: `settings.demoDataActive` is set
+`true` whenever a seed runs and `false` on reset, and two UI surfaces read it live: (a) the sidebar
+"نسخة تجريبية" badge (both desktop and mobile) switches to an explicit warning-colored message when
+active, via a new `updateDevBadge()` called from `router()` on every navigation; (b) every page now
+shows a dismissable-looking (but always-current) warning banner at the top of its content
+(`demoDataBannerHTML()`, inserted at the top of `#main-content` on every `router()` call) stating
+plainly that the currently-displayed data is demo/generated, not real — this is new: previously the
+only "this is a trial version" notice was the static top-of-page dev-strip, which doesn't reflect
+whether *current data* is real or seeded.
+Acceptance Criteria:
+- `seedRandomDormitoryData({ spreadOverDays: N })` produces resident check-in dates, payment dates,
+  guest check-ins, and expense dates spread across the last N days rather than all being today,
+  verified by checking the number of distinct dates produced is >1 for a non-trivial resident count.
+- `seedRandomDormitoryData({ fullSystemActivity: true })` creates exactly one capital-contribution
+  transaction per partner, zero-or-more advances/repayments, at least a chance of one asset
+  purchase, and a distribution transaction per partner when distributable profit > 0 — all tagged
+  `createdBy: DataService.SEEDED_DEMO_MARKER`.
+- Calling `seedRandomDormitoryData()` with no arguments, or with only TASK-010's existing options,
+  still reproduces the exact prior behavior (`spreadOverDays` and `fullSystemActivity` both default
+  to values that skip this new behavior entirely) — verified.
+- `resetDormitoryOnly()` removes every `SEEDED_DEMO_MARKER`-tagged transaction and asset, in
+  addition to its existing `SEEDED_EXPENSE_MARKER`-tagged expenses and dormitory-derived revenue
+  categories, while preserving a real manually-entered transaction/asset with the same type —
+  verified via an interleaved seed+manual-entry+reset cycle.
+- `settings.demoDataActive` is `true` after any successful seed and `false` after
+  `resetDormitoryOnly()`.
+- The Settings → "الغرف والأسرة" options modal exposes both new options (a "نشاط شهر كامل" checkbox
+  defaulting to checked, and a spread-days number input defaulting to 30), and the panel's
+  description/confirm/toast copy reflects the new scope (whole system, not just dormitory).
+- Every page shows a warning banner at the top of its content while `demoDataActive` is true, and
+  the sidebar badge (desktop + mobile) reflects the same state; both disappear/revert immediately
+  after `resetDormitoryOnly()` runs (verified the state-reading logic; live-browser confirmation is
+  the one thing this session's tooling can't do — see Known Limitation).
+- `node --check` passes on all three touched files (`js/data.js`, `js/settings.js`, `js/app.js`).
+Completed:
+- `js/data.js`: added `SEEDED_DEMO_MARKER` constant; `seedRandomDormitoryData()` extended with
+  `spreadOverDays` and `fullSystemActivity` options (plus `randomPastDate()`/`randomDateAfter()`
+  helpers), producing dated residents/payments/guests/expenses and, when `fullSystemActivity` is on,
+  partner capital contributions, advances/repayments, an asset purchase, and profit distributions,
+  all tagged for precise cleanup; sets `settings.demoDataActive = true` on completion. Summary object
+  extended with `spreadOverDays`, `fullSystemActivity`, `capitalContributed`, `advancesCreated`,
+  `repaymentsCreated`, `assetsCreated`, `distributionsCreated`, `distributionsTotal`.
+  `resetDormitoryOnly()` extended to also strip `SEEDED_DEMO_MARKER`-tagged transactions and assets,
+  and sets `settings.demoDataActive = false`.
+- `js/settings.js`: seed options modal gained a "نشاط شهر كامل عبر كل صفحات النظام" section (toggle
+  + spread-days input); panel description, reset-confirmation text, and success toast rewritten to
+  describe whole-system scope instead of dormitory-only; both the seed button and the reset button
+  now call `updateDevBadge()` after completing.
+- `js/app.js`: new `demoDataBannerHTML()` (reads `settings.demoDataActive`) inserted at the top of
+  `#main-content` on every `router()` call; new `updateDevBadge()` swaps the sidebar `.dev-badge`
+  text/icon based on the same flag, called from `router()` so it updates on every navigation without
+  needing a full page reload.
+Validation:
+- `node --check` on all three touched files — passed.
+- Runtime smoke test (Node `vm`-based harness, same pattern as prior tasks): seeded with
+  `spreadOverDays: 30, fullSystemActivity: true` using the app's own auto-seeded default partners
+  (`أيمن`/`الفاضل`, each `requiredContribution` set to 3,000,000) and asserted: exactly one capital
+  contribution transaction per partner; resident check-in dates span 22 distinct days out of 33
+  residents; expense dates span 8 distinct days; `settings.demoDataActive` becomes `true`; then added
+  one real manual transaction and one real manual asset, ran `resetDormitoryOnly()`, and asserted
+  every `SEEDED_DEMO_MARKER`/`SEEDED_EXPENSE_MARKER`-tagged record was removed while both real
+  records survived, occupancy returned to zero, and `demoDataActive` became `false`. Also re-ran a
+  no-args call (confirming all dates are still "today" and `fullSystemActivity` defaults to `false`,
+  matching the exact prior TASK-010 behavior) and a `fullSystemActivity: true` call with
+  `spreadOverDays` omitted (confirming it doesn't throw and chart-facing methods
+  (`calculateProfit`/`getMonthlyFinancials`/`getCashBalance`/`getReinvestmentSummary`) still execute
+  cleanly against the richer dataset). One test-harness mistake was caught and fixed along the way:
+  the harness initially added two *new* partners named `أيمن`/`الفاضل` on top of the two the app's
+  own `seedDemoData()` already creates at load, producing 4 same-named partners and inflated
+  transaction counts — not a product bug, fixed by reusing the auto-seeded partners instead.
+Checkpoint: TASK-011 (this entry)
+Next: Await the user's manual smoke-test feedback — specifically confirming the new banner/badge
+actually render correctly in a live browser (this session had no browser/UI tool available).
+
+---
+
 <!--
   Add new tasks below using the same format. Keep them small enough that another Claude session
   could pick one up cold and finish it using only the repository + this file + current-task.md +
