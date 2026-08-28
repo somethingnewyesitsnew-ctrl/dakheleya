@@ -1148,17 +1148,19 @@ const DataService = {
     },
 
     // محاكاة الأرباح (What-If)
-    simulateProfit({ occupiedBeds, bedPrice, monthlyExpenses, rent, reserve, reinvestment }) {
-        const revenue = occupiedBeds * bedPrice;
-        const totalExpenses = monthlyExpenses + rent;
+    simulateProfit({ occupiedBeds, bedPrice, monthlyExpenses, rent, reserve, reinvestment, servicesRevenue }) {
+        const bedsRevenue = (Number(occupiedBeds) || 0) * (Number(bedPrice) || 0);
+        const svcRevenue = Number(servicesRevenue) || 0;
+        const revenue = bedsRevenue + svcRevenue;
+        const totalExpenses = (Number(monthlyExpenses) || 0) + (Number(rent) || 0);
         const netProfit = revenue - totalExpenses;
-        const distributable = netProfit - reserve - reinvestment;
+        const distributable = netProfit - (Number(reserve) || 0) - (Number(reinvestment) || 0);
         const partners = this.getPartners();
         const shares = {};
         partners.forEach(p => { shares[p.name] = Math.round(distributable * (p.ownership / 100)); });
-        // نقطة التعادل: عدد الأسرة التي تجعل الإيراد = المصروفات
-        const breakEvenBeds = bedPrice > 0 ? Math.ceil(totalExpenses / bedPrice) : 0;
-        return { revenue, totalExpenses, netProfit, distributable, shares, breakEvenBeds };
+        // نقطة التعادل: عدد الأسرة التي تجعل إيراد الأسرة وحده (بدون الخدمات) = المصروفات
+        const breakEvenBeds = bedPrice > 0 ? Math.ceil(Math.max(totalExpenses - svcRevenue, 0) / bedPrice) : 0;
+        return { bedsRevenue, servicesRevenue: svcRevenue, revenue, totalExpenses, netProfit, distributable, shares, breakEvenBeds };
     },
 
     /* ---------------------- إعادة الاستثمار ---------------------- */
