@@ -7,6 +7,10 @@
 // الحقيقي المُدخل من صفحة "هيكل الداخلية").
 const SIMULATOR_SUGGESTED_BEDS = 59;
 
+function simServiceIcon(type) {
+    return { 'الطعام': 'bi-cup-hot', 'الإنترنت': 'bi-wifi', 'المكتبة': 'bi-book', 'الترحيل': 'bi-truck' }[type] || 'bi-stars';
+}
+
 Pages.simulator = function (container) {
     const settings = DataService.getSettings();
     const partners = DataService.getPartners();
@@ -17,60 +21,80 @@ Pages.simulator = function (container) {
     container.innerHTML = `
     <div class="alert alert-light border mb-3 d-flex align-items-start gap-2" style="font-size:13px;">
         <i class="bi bi-info-circle text-teal mt-1"></i>
-        <span>أدخل عدد الأسرة اللي متوقّع تكون مشغولة وسعر السرير، وحدد أي خدمات مدفوعة (طعام، إنترنت...) مع عدد المشتركين المتوقع وسعرها لكل مشترك — والنظام يحسب لك الإيراد الكلي، صافي الربح، والأرباح القابلة للتوزيع، ونصيب كل شريك منها.</span>
+        <span>أدخل عدد الأسرة اللي متوقّع تكون مشغولة وسعر السرير، وفعّل أي خدمة مدفوعة (طعام، إنترنت...) مع عدد المشتركين المتوقع وسعرها لكل مشترك — والنظام يحسب لك الإيراد الكلي، صافي الربح، والأرباح القابلة للتوزيع، ونصيب كل شريك منها.</span>
     </div>
+
     <div class="row g-3">
-        <div class="col-lg-5">
-            <div class="app-card">
-                <div class="app-card-header"><h2><i class="bi bi-sliders me-1 text-teal"></i>مدخلات المحاكاة</h2></div>
+        <div class="col-lg-6">
+            <div class="app-card h-100">
+                <div class="app-card-header"><h2><i class="bi bi-door-open me-1 text-teal"></i>إيراد الأسرة</h2></div>
                 <div class="app-card-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">عدد الأسرة المشغولة (المقترح)</label>
-                        <input type="number" class="form-control" id="sim-beds-input" min="0" max="500" value="${SIMULATOR_SUGGESTED_BEDS}">
-                        <div class="form-text" style="font-size:11px;">إجمالي عدد الأسرة الفعلي المسجّل حالياً في هيكل الداخلية: ${occ.total || 0} سريراً</div>
-                        <div class="d-flex gap-1 flex-wrap mt-2">
-                            ${[50,60,70,80,90,100].map(p => `<button class="btn btn-outline-secondary btn-sm sim-preset-btn" data-pct="${p}">${p}%</button>`).join('')}
-                        </div>
+                    <label class="form-label fw-bold">عدد الأسرة المشغولة (المقترح)</label>
+                    <input type="number" class="form-control" id="sim-beds-input" min="0" max="500" value="${SIMULATOR_SUGGESTED_BEDS}">
+                    <div class="form-text" style="font-size:11px;">إجمالي عدد الأسرة الفعلي المسجّل حالياً في هيكل الداخلية: ${occ.total || 0} سريراً</div>
+                    <div class="d-flex gap-1 flex-wrap mt-2 mb-3">
+                        ${[50,60,70,80,90,100].map(p => `<button class="btn btn-outline-secondary btn-sm sim-preset-btn" data-pct="${p}">${p}%</button>`).join('')}
                     </div>
-                    <div class="mb-3"><label class="form-label fw-bold">سعر السرير الشهري</label><input type="number" class="form-control" id="sim-price" value="${settings.bedPrice||0}"></div>
-
-                    <div class="section-title" style="font-size:14px;margin:20px 0 10px;"><i class="bi bi-stars text-teal"></i>الخدمات المدفوعة</div>
-                    <p class="text-muted" style="font-size:12px;margin-top:-6px;">فعّل أي خدمة تحت وحدد عدد المشتركين المتوقع وسعرها — إيرادها بيُضاف لإجمالي إيرادات المحاكاة.</p>
-                    <div id="sim-services-list">
-                        ${services.length ? services.map(s => `
-                        <div class="border rounded-3 p-2 mb-2 sim-service-row" data-id="${s.id}">
-                            <div class="form-check mb-2">
-                                <input class="form-check-input sim-service-check" type="checkbox" id="sim-svc-${s.id}">
-                                <label class="form-check-label fw-bold" for="sim-svc-${s.id}" style="font-size:13px;">${Utils.escapeHtml(s.name)}</label>
-                            </div>
-                            <div class="row g-2">
-                                <div class="col-6"><label class="form-label" style="font-size:11px;">عدد المشتركين المقترح</label><input type="number" class="form-control form-control-sm sim-service-count" min="0" value="0"></div>
-                                <div class="col-6"><label class="form-label" style="font-size:11px;">السعر لكل مشترك</label><input type="number" class="form-control form-control-sm sim-service-price" min="0" value="${s.price}"></div>
-                            </div>
-                        </div>`).join('') : `<div class="text-muted" style="font-size:12.5px;">لا توجد خدمات معرّفة بعد. أضفها من "الداخلية ← الخدمات" حتى تظهر هنا وتقدر تحاكي إيرادها.</div>`}
-                    </div>
-
-                    <div class="mb-3 mt-3"><label class="form-label fw-bold">المصاريف الشهرية (بدون الإيجار)</label><input type="number" class="form-control" id="sim-expenses" value="${DataService.getRecurringMonthlyBurden()}"><div class="form-text" style="font-size:11px;">مبدئياً محسوبة من عبء المصروفات الدورية النشطة — يمكنك تعديلها</div></div>
-                    <div class="mb-3"><label class="form-label fw-bold">الإيجار الشهري</label><input type="number" class="form-control" id="sim-rent" value="${settings.rent}"></div>
-                    <div class="mb-3"><label class="form-label fw-bold">احتياطي التشغيل</label><input type="number" class="form-control" id="sim-reserve" value="${settings.operatingReserveDefault || 1000000}"></div>
-                    <div class="mb-1"><label class="form-label fw-bold">إعادة الاستثمار</label><input type="number" class="form-control" id="sim-reinvest" value="0"></div>
+                    <label class="form-label fw-bold">سعر السرير الشهري</label>
+                    <input type="number" class="form-control" id="sim-price" value="${settings.bedPrice||0}">
                 </div>
             </div>
         </div>
-        <div class="col-lg-7">
-            <div class="app-card">
-                <div class="app-card-header"><h2><i class="bi bi-calculator me-1 text-teal"></i>نتائج المحاكاة</h2></div>
-                <div class="app-card-body" id="sim-results"></div>
+        <div class="col-lg-6">
+            <div class="app-card h-100">
+                <div class="app-card-header"><h2><i class="bi bi-cash-coin me-1 text-teal"></i>المصاريف والإعدادات المالية</h2></div>
+                <div class="app-card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label fw-bold">المصاريف الشهرية</label>
+                            <input type="number" class="form-control" id="sim-expenses" value="${DataService.getRecurringMonthlyBurden()}">
+                            <div class="form-text" style="font-size:10.5px;">بدون الإيجار — مبدئياً من العبء الدوري النشط</div>
+                        </div>
+                        <div class="col-6"><label class="form-label fw-bold">الإيجار الشهري</label><input type="number" class="form-control" id="sim-rent" value="${settings.rent}"></div>
+                        <div class="col-6"><label class="form-label fw-bold">احتياطي التشغيل</label><input type="number" class="form-control" id="sim-reserve" value="${settings.operatingReserveDefault || 1000000}"></div>
+                        <div class="col-6"><label class="form-label fw-bold">إعادة الاستثمار</label><input type="number" class="form-control" id="sim-reinvest" value="0"></div>
+                    </div>
+                </div>
             </div>
         </div>
+    </div>
+
+    <div class="section-title"><i class="bi bi-stars text-teal"></i>الخدمات المدفوعة</div>
+    <p class="text-muted mt-n2 mb-3" style="font-size:12.5px;">فعّل مفتاح أي خدمة وحدد عدد المشتركين المتوقع وسعرها لكل مشترك — إيرادها بيُضاف تلقائياً لإجمالي إيرادات المحاكاة.</p>
+    ${services.length ? `
+    <div class="row g-3" id="sim-services-list">
+        ${services.map(s => `
+        <div class="col-md-4 col-sm-6">
+            <div class="app-card sim-service-card h-100" data-id="${s.id}">
+                <div class="app-card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="kpi-icon bg-soft-teal" style="width:34px;height:34px;font-size:15px;"><i class="bi ${simServiceIcon(s.type)}"></i></div>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input sim-service-check" type="checkbox" id="sim-svc-${s.id}" role="switch">
+                        </div>
+                    </div>
+                    <label class="fw-bold d-block mb-2 sim-service-name" for="sim-svc-${s.id}" style="font-size:13.5px;">${Utils.escapeHtml(s.name)}</label>
+                    <div class="row g-2">
+                        <div class="col-6"><label class="form-label" style="font-size:10.5px;">عدد المشتركين</label><input type="number" class="form-control form-control-sm sim-service-count" min="0" value="0"></div>
+                        <div class="col-6"><label class="form-label" style="font-size:10.5px;">السعر/مشترك</label><input type="number" class="form-control form-control-sm sim-service-price" min="0" value="${s.price}"></div>
+                    </div>
+                </div>
+            </div>
+        </div>`).join('')}
+    </div>` : `<div class="app-card"><div class="app-card-body">${emptyState('bi-stars','لا توجد خدمات معرّفة بعد — أضفها من "الداخلية ← الخدمات" حتى تظهر هنا وتقدر تحاكي إيرادها')}</div></div>`}
+
+    <div class="section-title"><i class="bi bi-calculator text-teal"></i>نتائج المحاكاة</div>
+    <div class="app-card">
+        <div class="app-card-body" id="sim-results"></div>
     </div>`;
 
     function getSelectedServices() {
-        return [...document.querySelectorAll('.sim-service-row')].map(row => {
-            const checked = row.querySelector('.sim-service-check').checked;
-            const count = Number(row.querySelector('.sim-service-count').value) || 0;
-            const price = Number(row.querySelector('.sim-service-price').value) || 0;
-            const name = row.querySelector('.form-check-label').textContent;
+        return [...document.querySelectorAll('.sim-service-card')].map(card => {
+            const checked = card.querySelector('.sim-service-check').checked;
+            const count = Number(card.querySelector('.sim-service-count').value) || 0;
+            const price = Number(card.querySelector('.sim-service-price').value) || 0;
+            const name = card.querySelector('.sim-service-name').textContent;
+            card.classList.toggle('sim-service-active', checked);
             return { checked, count, price, name, revenue: checked ? count * price : 0 };
         });
     }

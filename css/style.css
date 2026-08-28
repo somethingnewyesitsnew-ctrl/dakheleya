@@ -434,6 +434,19 @@ body {
 
 .sim-preset-btn { min-width: 58px; }
 
+.sim-service-card {
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+.sim-service-card.sim-service-active {
+    border-color: var(--brand-teal-light);
+    box-shadow: 0 0 0 2px rgba(14,124,123,.14);
+}
+.sim-service-card .form-check-input:checked {
+    background-color: var(--brand-teal);
+    border-color: var(--brand-teal);
+}
+.mt-n2 { margin-top: -8px; }
+
 .offcanvas#mobileSidebar { background: var(--brand-navy-deep); color: #fff; width: 280px; }
 .offcanvas#mobileSidebar .sidebar-nav, .offcanvas#mobileSidebar .sidebar-brand { color: inherit; }
 
