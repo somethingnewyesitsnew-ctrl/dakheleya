@@ -116,13 +116,12 @@ function renderRoomsTabContent(container) {
             <div class="app-card">
                 <div class="app-card-header"><h2><i class="bi bi-layers me-1 text-teal"></i>هيكل الداخلية</h2></div>
                 <div class="app-card-body">
-                    <div class="row g-2 mb-3">
+                    <div class="row g-2 mb-2">
                         <div class="col-4"><div class="kpi-card p-2"><div class="kpi-label">طوابق</div><div class="kpi-value" style="font-size:18px;">${floors.length}</div></div></div>
                         <div class="col-4"><div class="kpi-card p-2"><div class="kpi-label">غرف</div><div class="kpi-value" style="font-size:18px;">${rooms.length}</div></div></div>
                         <div class="col-4"><div class="kpi-card p-2"><div class="kpi-label">أسرّة</div><div class="kpi-value" style="font-size:18px;">${DataService.getBeds().length}</div></div></div>
                     </div>
-                    <p class="text-muted" style="font-size:12.5px;">إدارة الطوابق والشقق والغرف والأسرة بالتفصيل تتم من صفحة <b>"الداخلية ← هيكل الداخلية"</b> — هناك تقدر تبني الهرم كاملاً وتضيف/تحذف أي مستوى.</p>
-                    <a href="#/dormitory" class="btn btn-brand btn-sm">فتح هيكل الداخلية</a>
+                    <a href="#/dormitory" class="btn btn-brand btn-sm">إدارة الطوابق/الشقق/الغرف بالتفصيل</a>
                 </div>
             </div>
         </div>
@@ -130,7 +129,6 @@ function renderRoomsTabContent(container) {
             <div class="app-card">
                 <div class="app-card-header"><h2><i class="bi bi-cash-coin me-1 text-teal"></i>سعر السرير الافتراضي</h2></div>
                 <div class="app-card-body">
-                    <p class="text-muted" style="font-size:12px;">يُستخدم كقيمة مبدئية عند إنشاء غرفة جديدة — يمكن تغيير سعر كل غرفة بشكل مستقل.</p>
                     <label class="form-label fw-bold">سعر السرير الشهري</label>
                     <input type="number" class="form-control" id="set-bedprice" value="${s.bedPrice||0}">
                     <button class="btn btn-brand btn-sm mt-2" id="save-dorm-btn">حفظ</button>
@@ -140,40 +138,34 @@ function renderRoomsTabContent(container) {
     </div>
 
     <div class="app-card mt-3">
-        <div class="app-card-header"><h2><i class="bi bi-building me-1 text-teal"></i>الهيكل الفعلي للداخلية</h2></div>
+        <div class="app-card-header">
+            <h2><i class="bi bi-building me-1 text-teal"></i>الهيكل الفعلي للداخلية</h2>
+            <span class="text-muted" style="font-size:11.5px;" title="طابقان، كل طابق 3 شقق، توزيع رباعية/ثلاثية/سنجل محدد لكل شقة — بدون طالبات أو مصروفات">2 طابق · 6 شقق · 26 غرفة · 70 سرير <i class="bi bi-info-circle"></i></span>
+        </div>
         <div class="app-card-body">
-            <p class="text-muted mb-3" style="font-size:13px;">
-                <i class="bi bi-info-circle text-teal me-1"></i>
-                ينشئ الهيكل الحقيقي للداخلية دفعة واحدة: <b>طابقان</b>، كل طابق <b>3 شقق</b>، وتوزيع
-                غرف وأسرّة محدد لكل شقة (رباعية/ثلاثية/سنجل) — الإجمالي <b>26 غرفة و70 سريراً</b>.
-                هذا يُنشئ <b>الهيكل الفيزيائي فقط</b> (بدون طالبات أو مصروفات)، جاهزاً لتسكين طالبات
-                حقيقيات عليه بالطريقة العادية. يعمل مرة واحدة فقط طالما الداخلية فارغة — لو فيه هيكل
-                مسجل بالفعل لازم تفرّغ الداخلية أولاً من الزر أدناه.
-            </p>
-            <button class="btn btn-brand btn-sm" id="setup-real-building-btn"><i class="bi bi-building me-1"></i>إنشاء الهيكل الحقيقي للداخلية (طابقين / 6 شقق / 70 سريراً)</button>
+            <button class="btn btn-brand btn-sm" id="setup-real-building-btn"><i class="bi bi-building me-1"></i>إنشاء الهيكل الحقيقي للداخلية</button>
         </div>
     </div>
 
     <div class="app-card mt-3" style="border-color:#f2dfb0;">
-        <div class="app-card-header"><h2><i class="bi bi-shuffle me-1 text-teal"></i>بيانات تجريبية للنظام كامل</h2></div>
+        <div class="app-card-header">
+            <h2><i class="bi bi-shuffle me-1 text-teal"></i>بيانات تجريبية للنظام كامل</h2>
+            <button class="btn btn-light border btn-sm" data-bs-toggle="collapse" data-bs-target="#demo-data-collapse">إظهار/إخفاء</button>
+        </div>
+        <div class="collapse" id="demo-data-collapse">
         <div class="app-card-body">
-            <p class="text-muted mb-3" style="font-size:13px;">
+            <p class="text-muted mb-3" style="font-size:12.5px;">
                 <i class="bi bi-info-circle text-teal me-1"></i>
-                لتجربة النظام بسرعة: <b>"تحكم وتعبئة عشوائية"</b> بتفتح لك نافذة تحدد فيها بنفسك كل
-                التفاصيل — عدد الطوابق والشقق والغرف، نسبة الإشغال، نسبة الطالبات اللي دفعت، وهل تريد
-                توليد ضيفات وخدمات ومصروفات تشغيلية. وممكن كمان تفعّل <b>"نشاط شهر كامل"</b> عشان
-                التواريخ (تسكين، دفعات، مصروفات) تنتشر على مدار شهر كامل بدل ما تكون كلها اليوم، ويضيف
-                كمان مساهمات رأس مال وسلف شركاء وشراء أصل وتوزيع أرباح — عشان <b>كل صفحات النظام</b>
-                (الشراكة، المالية، التأسيس والتجهيز، المراجعة، لوحة التحكم) تشتغل وتوريك وضعاً منطقياً
-                ومترابطاً، مش بس منطقة الداخلية. و<b>"إعادة تهيئة الداخلية"</b> بتمسح كل البيانات
-                التجريبية دي (الداخلية + النشاط المالي الناتج عنها) وترجّع النظام فاضياً عشان تجرّب من
-                جديد، دون المساس بالشركاء أنفسهم أو إعدادات المالية العامة أو أي بيانات حقيقية أدخلتها
-                بنفسك.
+                لتجربة النظام: "تحكم وتعبئة عشوائية" يفتح نافذة تحدد فيها التفاصيل (عدد
+                الطوابق/الشقق/الغرف، نسبة الإشغال والدفع، وهل تريد ضيفات/خدمات/مصروفات/نشاط شهر كامل
+                عبر كل الصفحات). "إعادة تهيئة الداخلية" يمسح كل ده فقط، دون التأثير على الشركاء أو
+                البيانات الحقيقية.
             </p>
             <div class="d-flex gap-2 flex-wrap">
                 <button class="btn btn-brand btn-sm" id="seed-random-dorm-btn"><i class="bi bi-sliders me-1"></i>تحكم وتعبئة عشوائية للتجربة</button>
                 <button class="btn btn-outline-danger btn-sm" id="reset-dorm-only-btn"><i class="bi bi-arrow-counterclockwise me-1"></i>إعادة تهيئة الداخلية من الصفر</button>
             </div>
+        </div>
         </div>
     </div>`;
 

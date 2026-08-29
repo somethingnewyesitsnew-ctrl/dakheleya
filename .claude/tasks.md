@@ -667,3 +667,55 @@ above if desired.
   of implementing it immediately. If the task belongs to a tracked user request, link it via
   "Parent Request: REQ-0NN" and make sure that REQ's entry in requests.md lists this task ID too.
 -->
+
+## TASK-015
+Parent Request: — (small, self-contained UX fix)
+Title: Contain scroll system-wide (tables, room grids, modals) + shorten Settings "الغرف والأسرة" tab
+Status: COMPLETED
+Priority: Normal
+Description: User reported that "everywhere" in the system requires page-level scrolling and asked
+that anything scrollable be contained (in a tab/component) rather than growing the whole page, plus
+general shortening. Verified TASK-014's real-structure feature was live and correct on the pushed
+repo first. Implemented a system-wide CSS-only fix (no per-page JS changes needed for tables/
+modals): `.table-responsive` now caps at 62vh with an internal scrollbar and a sticky header;
+`.room-grid` (floor/apartment/room tiles) caps at 55vh; every `.modal-content` caps at
+`calc(100vh - 60px)` with `.modal-body` scrolling internally — so long tables, long room grids, and
+long modals (e.g. resident profile) no longer push the surrounding page down, regardless of which
+page renders them. Print media query updated to remove these caps when printing so nothing is cut
+off on paper. Also shortened Settings → "الغرف والأسرة": trimmed explanatory paragraphs, and
+collapsed the (rarely used) "بيانات تجريبية للنظام كامل" panel behind a show/hide toggle, collapsed
+by default, since it had grown long after TASK-014 added a sibling card.
+Acceptance Criteria:
+- Long tables (residents, expenses, transactions, activity log, etc.) scroll internally with a
+  visible sticky header, not by growing page height.
+- Room/floor/apartment grids (js/dormitory.js) scroll internally past ~55vh.
+- Modals taller than the viewport scroll their own body, not the page behind them.
+- Printing (`window.print()`) still renders full, uncut tables/grids/modals (caps removed via
+  `@media print`).
+- Settings → "الغرف والأسرة" tab is visibly shorter; the demo-data panel is collapsed by default
+  and toggleable.
+- No JS logic changed — `setupRealBuildingStructure()` (TASK-014) still produces exactly
+  2 floors / 6 apartments / 26 rooms / 70 beds, re-verified via the same runtime harness after
+  this change.
+- CSS brace-balance sanity check passes; `node --check` passes on the touched JS file.
+Completed:
+- `css/style.css`: `.table-responsive` (max-height + scroll + sticky `thead th`), `.room-grid`
+  (max-height + scroll), new `.modal-content`/`.modal-body` rules, `@media print` overrides for
+  all three.
+- `js/settings.js`: `renderRoomsTabContent()` shortened — trimmed prose, added
+  `data-bs-toggle="collapse"` show/hide for the demo-data card (Bootstrap's own collapse component,
+  already loaded — no new JS wiring needed beyond the markup attributes).
+Validation:
+- `node --check js/settings.js` — passed.
+- Python brace-count sanity check on `css/style.css` (121 open / 121 close) — balanced.
+- Re-ran the TASK-014 runtime harness (`setupRealBuildingStructure()` from a factory-reset state)
+  after this change — still returns exactly 2/6/26/70, confirming this CSS/markup-only change did
+  not regress the prior task's logic.
+- No live-browser visual check was possible in this session (no browser/UI tool available) — user
+  should verify visually: a long table (e.g. residents/activity log with many rows) scrolls inside
+  its card instead of the page; a tall modal (e.g. resident profile) scrolls its own body; Settings
+  → "الغرف والأسرة" is noticeably shorter with the demo panel collapsed by default.
+Checkpoint: TASK-015 (this entry)
+Next: Await user's visual feedback. If specific pages still feel long after this, the next
+candidate would be shortening the descriptive alert boxes under each hub tab (js/hubs.js) — not
+done here to keep this change scoped and low-risk.

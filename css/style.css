@@ -352,6 +352,11 @@ body {
 }
 
 /* ---------------- Tables ---------------- */
+/* أي جدول طويل يصير له سكرول داخلي بدل ما يطوّل الصفحة كلها — الصفحة نفسها تفضل قصيرة */
+.table-responsive {
+    max-height: 62vh;
+    overflow-y: auto;
+}
 .table-app {
     font-size: 13.8px;
 }
@@ -363,6 +368,9 @@ body {
     border-bottom: 1px solid var(--border-soft);
     white-space: nowrap;
     padding: 10px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 2;
 }
 .table-app tbody td {
     padding: 10px 12px;
@@ -376,6 +384,9 @@ body {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 12px;
+    max-height: 55vh;
+    overflow-y: auto;
+    padding-inline-end: 4px; /* مساحة لشريط السكرول عشان ما يغطي آخر عمود */
 }
 .room-tile {
     border-radius: var(--radius-md);
@@ -446,6 +457,14 @@ body {
     border-color: var(--brand-teal);
 }
 .mt-n2 { margin-top: -8px; }
+
+/* ---------------- سكرول داخلي للنوافذ المنبثقة (بدل ما تكبّر الصفحة كلها) ---------------- */
+.modal-content {
+    max-height: calc(100vh - 60px);
+}
+.modal-body {
+    overflow-y: auto;
+}
 
 .offcanvas#mobileSidebar { background: var(--brand-navy-deep); color: #fff; width: 280px; }
 .offcanvas#mobileSidebar .sidebar-nav, .offcanvas#mobileSidebar .sidebar-brand { color: inherit; }
@@ -525,5 +544,7 @@ body {
     .app-card, .kpi-card { box-shadow: none !important; border: 1px solid #ddd !important; break-inside: avoid; }
     .modal { position: static !important; display: block !important; }
     .modal-dialog { max-width: 100% !important; margin: 0 !important; }
-    .modal-content { border: none !important; box-shadow: none !important; }
+    .modal-content { border: none !important; box-shadow: none !important; max-height: none !important; }
+    .modal-body { overflow: visible !important; }
+    .table-responsive, .room-grid { max-height: none !important; overflow: visible !important; }
 }
