@@ -139,6 +139,21 @@ function renderRoomsTabContent(container) {
         </div>
     </div>
 
+    <div class="app-card mt-3">
+        <div class="app-card-header"><h2><i class="bi bi-building me-1 text-teal"></i>الهيكل الفعلي للداخلية</h2></div>
+        <div class="app-card-body">
+            <p class="text-muted mb-3" style="font-size:13px;">
+                <i class="bi bi-info-circle text-teal me-1"></i>
+                ينشئ الهيكل الحقيقي للداخلية دفعة واحدة: <b>طابقان</b>، كل طابق <b>3 شقق</b>، وتوزيع
+                غرف وأسرّة محدد لكل شقة (رباعية/ثلاثية/سنجل) — الإجمالي <b>26 غرفة و70 سريراً</b>.
+                هذا يُنشئ <b>الهيكل الفيزيائي فقط</b> (بدون طالبات أو مصروفات)، جاهزاً لتسكين طالبات
+                حقيقيات عليه بالطريقة العادية. يعمل مرة واحدة فقط طالما الداخلية فارغة — لو فيه هيكل
+                مسجل بالفعل لازم تفرّغ الداخلية أولاً من الزر أدناه.
+            </p>
+            <button class="btn btn-brand btn-sm" id="setup-real-building-btn"><i class="bi bi-building me-1"></i>إنشاء الهيكل الحقيقي للداخلية (طابقين / 6 شقق / 70 سريراً)</button>
+        </div>
+    </div>
+
     <div class="app-card mt-3" style="border-color:#f2dfb0;">
         <div class="app-card-header"><h2><i class="bi bi-shuffle me-1 text-teal"></i>بيانات تجريبية للنظام كامل</h2></div>
         <div class="app-card-body">
@@ -165,6 +180,15 @@ function renderRoomsTabContent(container) {
     document.getElementById('save-dorm-btn').addEventListener('click', () => {
         DataService.saveSettings({ bedPrice: Number(document.getElementById('set-bedprice').value) || 0 });
         showToast('تم حفظ إعدادات الداخلية', 'success');
+    });
+
+    document.getElementById('setup-real-building-btn').addEventListener('click', () => {
+        confirmAction('سيتم إنشاء الهيكل الفعلي للداخلية بالكامل (طابقين، 6 شقق، 26 غرفة، 70 سريراً) بناءً على التوزيع الحقيقي المتفق عليه. لن يتم إنشاء أي طالبات أو مصروفات — الهيكل فقط. يعمل فقط إذا كانت الداخلية فارغة حالياً. هل تريد المتابعة؟', () => {
+            const result = DataService.setupRealBuildingStructure();
+            if (result.error) { showToast(result.error, 'danger'); return; }
+            showToast(`تم إنشاء ${result.floors} طابق و${result.apartments} شقة و${result.rooms} غرفة و${result.beds} سريراً`, 'success');
+            Pages.settings(container);
+        }, false);
     });
 
     document.getElementById('seed-random-dorm-btn').addEventListener('click', () => {

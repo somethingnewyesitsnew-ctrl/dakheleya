@@ -1478,6 +1478,79 @@ const DataService = {
         StorageService.set(STORAGE_KEYS.meta, { seeded: true, factory: true, seedDate: new Date().toISOString(), version: 4 });
     },
 
+    /* ---------------------- إنشاء الهيكل الحقيقي للداخلية (بيانات فعلية، غير عشوائية) ---------------------- */
+    // يبني هيكل الداخلية الفعلي بالضبط كما هو على أرض الواقع: طابقان متطابقان، كل طابق 3 شقق،
+    // وتوزيع غرف/أسرّة محدد لكل شقة (رباعية/ثلاثية/سنجل). لا يُنشئ أي طالبات أو مصروفات أو
+    // معاملات — فقط الهيكل الفيزيائي (طابق ← شقة ← غرفة ← سرير)، جاهزاً لتسكين طالبات حقيقيات
+    // عليه لاحقاً بالطريقة العادية. يرفض العمل لو كان هناك هيكل داخلية موجود بالفعل، تفادياً
+    // لتكرار/تعارض الأرقام مع بيانات حقيقية موجودة.
+    setupRealBuildingStructure() {
+        if (this.getFloors().length) {
+            return { error: 'يوجد هيكل داخلية مسجل بالفعل — لإعادة الإنشاء يجب تفريغ الداخلية أولاً من "إعادة تهيئة الداخلية من الصفر"' };
+        }
+        const user = Utils.currentUserName();
+        const settings = this.getSettings();
+        const defaultPrice = Number(settings.bedPrice) || 0;
+
+        // نفس تقسيم الشقق الثلاث يتكرر مطابقاً في الطابقين
+        const APARTMENT_PLAN = [
+            { suffix: '1', rooms: [
+                { type: 'رباعية', capacity: 4, count: 1 },
+                { type: 'ثلاثية', capacity: 3, count: 2 },
+                { type: 'مفردة', capacity: 1, count: 3 } // "سنجل"
+            ]},
+            { suffix: '2', rooms: [
+                { type: 'رباعية', capacity: 4, count: 2 },
+                { type: 'ثلاثية', capacity: 3, count: 1 }
+            ]},
+            { suffix: '3', rooms: [
+                { type: 'رباعية', capacity: 4, count: 1 },
+                { type: 'ثلاثية', capacity: 3, count: 2 },
+                { type: 'مفردة', capacity: 1, count: 1 }
+            ]}
+        ];
+
+        let floorsCount = 0, apartmentsCount = 0, roomsCount = 0, bedsCount = 0;
+
+        [1, 2].forEach(floorNum => {
+            const floor = this.addFloor({
+                name: `الطابق ${floorNum === 1 ? 'الأول' : 'الثاني'}`,
+                order: floorNum,
+                description: 'الهيكل الفعلي للداخلية'
+            });
+            floorsCount++;
+
+            APARTMENT_PLAN.forEach(aptDef => {
+                const aptNumber = `${floorNum}0${aptDef.suffix}`;
+                const apartment = this.addApartment({ number: aptNumber, name: '', floorId: floor.id });
+                if (apartment.error) return; // احترازي فقط — الأرقام فريدة عبر الطابقين بالتصميم
+                apartmentsCount++;
+
+                let roomIndex = 1;
+                aptDef.rooms.forEach(roomDef => {
+                    for (let i = 0; i < roomDef.count; i++) {
+                        this.addRoom({
+                            number: `${aptNumber}-${roomIndex}`,
+                            apartmentId: apartment.id,
+                            roomType: roomDef.type,
+                            capacity: roomDef.capacity,
+                            price: defaultPrice
+                        });
+                        roomIndex++;
+                        roomsCount++;
+                        bedsCount += roomDef.capacity;
+                    }
+                });
+            });
+        });
+
+        this.addActivity({
+            user, action: 'أنشأ الهيكل الحقيقي للداخلية',
+            entity: `${floorsCount} طوابق، ${apartmentsCount} شقق، ${roomsCount} غرفة، ${bedsCount} سرير`
+        });
+        return { floors: floorsCount, apartments: apartmentsCount, rooms: roomsCount, beds: bedsCount };
+    },
+
     /* ---------------------- تعبئة عشوائية للداخلية (بيانات تجريبية) ---------------------- */
     // ثابت: العلامة المستخدمة لتمييز المصروفات التي ولّدها هذا المولّد تلقائياً، عشان
     // resetDormitoryOnly() يقدر يشيلها بدقة دون المساس بأي مصروف حقيقي أدخله المستخدم يدوياً.

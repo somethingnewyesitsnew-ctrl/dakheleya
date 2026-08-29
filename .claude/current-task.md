@@ -1,7 +1,32 @@
 # CURRENT TASK
 
 ## Task ID
-None active — TASK-001 through TASK-011 are all COMPLETED. Awaiting the next request from the user.
+None active — TASK-001 through TASK-014 are all COMPLETED (per `git log`). Awaiting the next
+request from the user.
+
+## Note on state-file staleness (found and only partially reconciled this session)
+At the start of this session (TASK-014), `git log` showed TASK-013 as the latest commit, but this
+file's narrative below only described up through TASK-011 — a two-task gap not caused by this
+session. This session did not attempt a full retroactive write-up of TASK-012/013 (that content
+lives in `git log`/the actual diffs of those commits); it only added its own TASK-014 entry
+accurately in `.claude/tasks.md` and flagged this gap here per CLAUDE.md's "if state files
+contradict each other, stop and report" principle. A future session picking up real work should
+do a proper reconciliation pass (read the TASK-012/TASK-013 commits, backfill their summaries here)
+before treating this file's older narrative as complete.
+
+## Most Recently Completed Task
+TASK-014 — Added `DataService.setupRealBuildingStructure()`: deterministically builds the user's
+actual real dormitory layout (2 floors, 6 identical-pattern apartments, 26 rooms, 70 beds, with an
+exact per-apartment room-type/capacity spec supplied by the user), creating zero residents/expenses
+— structure only. Wired to a new button in Settings → "الغرف والأسرة", visually separated from the
+existing random/demo-data seeder. No architectural change was needed: the existing
+Floor→Apartment→Room→Bed model (built across TASK-001–013) already derives every occupancy/capacity
+number dynamically from bed records, already prevents double-booking (available-bed filtering) and
+over-capacity (bed count == room capacity by construction). See `.claude/tasks.md` TASK-014 for full
+acceptance criteria and the runtime smoke-test detail (exact counts verified: 2/6/26/70, per-
+apartment breakdown, room-type totals 8/10/8, live occupancy stats, check-in behavior).
+
+## Previously Most Recently Completed Task (pre-existing entry, kept for history)
 
 ## Most Recently Completed Task
 TASK-011 — Full-system demo activity (spread dates across a month + populate Partnership/Setup/

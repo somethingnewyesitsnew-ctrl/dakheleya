@@ -596,6 +596,70 @@ actually render correctly in a live browser (this session had no browser/UI tool
 
 ---
 
+## TASK-014
+Parent Request: — (small, self-contained; no REQ-xxx opened per "match ceremony to size")
+Title: Add deterministic real-building-structure setup (2 floors / 6 apartments / 26 rooms / 70 beds)
+Status: COMPLETED
+Priority: Normal
+Description: User provided the dormitory's actual physical layout (2 identical floors, 3
+apartments each, specific room-type/capacity counts per apartment: apt "1" = 1×quad + 2×triple +
+3×single = 6 rooms/13 beds; apt "2" = 2×quad + 1×triple = 3 rooms/11 beds; apt "3" = 1×quad +
+2×triple + 1×single = 4 rooms/11 beds; total 26 rooms / 70 beds) and asked the system be updated
+to reflect it, explicitly requiring no hard-coded numbers in the UI — everything must derive from
+the existing Floor→Apartment→Room→Bed relational data. Investigation confirmed the existing
+architecture (already built under TASK-001–013) already satisfies every structural requirement
+(dynamic occupancy stats, capacity enforced via bed-record count, double-booking prevented via
+available-bed filtering) — nothing needed to change there. What was missing was a way to
+deterministically populate the *real* layout (vs. the existing random test-data seeder). Added a
+new `DataService.setupRealBuildingStructure()` method (additive, follows the same pattern as
+`seedRandomDormitoryData()`) that builds the exact specified hierarchy with zero residents/
+expenses — pure physical structure, ready for real check-ins — plus one new button in Settings →
+"الغرف والأسرة" clearly separated from the existing demo-data panel.
+Acceptance Criteria:
+- Calling `setupRealBuildingStructure()` on an empty dormitory creates exactly 2 floors, 6
+  apartments, 26 rooms, 70 beds, matching the exact per-apartment room-type/count breakdown given.
+- Room type totals: 8 رباعية (quad), 10 ثلاثية (triple), 8 مفردة (single/"سنجل").
+- No residents, expenses, or transactions are created — structure only.
+- Calling it again when a floor already exists returns an error and does not duplicate/mutate
+  existing data.
+- All dashboard/occupancy/report numbers are 100% derived from the created bed records — no
+  hard-coded counts introduced anywhere in `js/dashboard.js`, `js/dormitory.js`, `js/reports.js`
+  (verified: none of these files were touched, since they already compute everything from
+  `DataService` — confirming the requirement was already met pre-existing).
+- Checking a resident into a real generated bed correctly flips that bed to `'مشغول'` and removes
+  it from every "available" listing (double-booking prevention verified against the real structure,
+  not just the random one).
+- `node --check` passes on both touched files.
+- No pre-existing file/feature modified outside the two additive insertions.
+Completed:
+- `js/data.js`: new `setupRealBuildingStructure()` method added, inserted just before the existing
+  `SEEDED_EXPENSE_MARKER`/random-seeder section.
+- `js/settings.js`: new "الهيكل الفعلي للداخلية" card + `setup-real-building-btn` handler added to
+  the "الغرف والأسرة" tab, positioned above (and visually distinct from) the existing amber-bordered
+  demo-data panel.
+Validation:
+- `node --check` on both touched files — passed.
+- Runtime smoke test (Node `vm`-based harness loading the real `js/data.js`): built the structure
+  from a factory-reset state and asserted exact floors/apartments/rooms/beds counts (2/6/26/70),
+  exact per-apartment room/bed counts for all 6 apartments individually, exact room-type
+  distribution (8/10/8), `occupancyStats()` returning `{total:70, available:70, occupied:0, rate:0}`
+  immediately after creation; asserted a second call on a non-empty structure returns an error
+  without duplicating; checked a resident into a generated bed and asserted `occupancyStats()`
+  updates to `{occupied:1, available:69, rate:1.4}` and the occupied bed no longer appears in that
+  room's available-bed list (double-booking prevention). All assertions passed.
+Known consideration (flagged to user, not a defect): `resetDormitoryOnly()` clears the real
+structure exactly the same way it clears a random-seeded one, since structural records aren't
+tagged by origin (only *expenses* carry `SEEDED_EXPENSE_MARKER`). If the user wants the real
+structure protected from that reset button specifically, a follow-up task should add an
+`isRealStructure`-style flag distinguishing real floors/apartments/rooms from demo ones.
+Checkpoint: TASK-014 (this entry)
+Next: Await user's manual smoke test in the browser (click "إنشاء الهيكل الحقيقي للداخلية" in
+Settings → "الغرف والأسرة" and confirm the Dormitory hub / Dashboard occupancy tab show the
+expected 2 floors / 6 apartments / 26 rooms / 70 beds); consider the reset-protection follow-up
+above if desired.
+
+---
+
 <!--
   Add new tasks below using the same format. Keep them small enough that another Claude session
   could pick one up cold and finish it using only the repository + this file + current-task.md +

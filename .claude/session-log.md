@@ -439,3 +439,55 @@ Ending Status: COMPLETED (TASK-011 / REQ-006), pending the user's manual smoke t
 a request to push to `origin/main`.
 
 Exact Next Action: See `.claude/handoff.md`.
+
+---
+
+## SESSION-008
+
+Date: See `git log` for this session's TASK-014 commit.
+
+Environment: Claude.ai browser chat with code-execution/bash tool enabled — new chat session. The
+user supplied a GitHub token in this chat; cloned the repo fresh into `/home/claude/repo` and found
+`origin/main` at `5253db0` (TASK-013), two commits ahead of what `.claude/current-task.md`/
+`handoff.md` described (which only narrated through TASK-011) — a real state-file staleness gap,
+flagged in both files rather than silently reconciled/invented.
+
+Starting Checkpoint: `5253db0` (TASK-013, confirmed via `git log --oneline -8` on the fresh clone).
+
+Active REQ: — (small, self-contained task; no REQ opened, per "match ceremony to size" guidance).
+
+Active TASK: TASK-014.
+
+Work Completed: User supplied the dormitory's real physical layout (2 identical floors, 3
+apartments each, exact room-type/capacity counts per apartment — 26 rooms / 70 beds total) and
+asked the system reflect it with everything derived dynamically, no hard-coded UI numbers.
+Confirmed via code review that the existing Floor→Apartment→Room→Bed architecture already satisfies
+every structural requirement (dynamic occupancy stats, capacity enforced via bed-record count,
+double-booking prevented via available-bed filtering) — no architecture change needed. Added
+`DataService.setupRealBuildingStructure()` (`js/data.js`), a deterministic (non-random) structure
+generator building the exact specified hierarchy with zero residents/expenses, guarded against
+re-running on a non-empty dormitory. Wired to a new, clearly-separated button/card in Settings →
+"الغرف والأسرة" (`js/settings.js`).
+
+Files Changed: `js/data.js`, `js/settings.js`, `.claude/tasks.md`, `.claude/current-task.md`,
+`.claude/handoff.md`, `.claude/session-log.md` (this entry).
+
+Validation Performed: `node --check` on both touched JS files (passed). Runtime smoke test — a
+Node `vm`-based harness loading the real `js/data.js` and calling `setupRealBuildingStructure()`
+against a factory-reset state — asserted exact floors/apartments/rooms/beds counts (2/6/26/70),
+exact per-apartment room/bed counts for all 6 apartments individually against the user's spec,
+exact room-type distribution (8 quad / 10 triple / 8 single), `occupancyStats()` returning the
+correct `{total:70, available:70, occupied:0, rate:0}` immediately after creation; asserted calling
+it again on a non-empty structure returns an error without duplicating; checked a resident into a
+generated bed and asserted occupancy stats update correctly and the bed is excluded from further
+availability listings (double-booking prevention verified against the real structure). All
+assertions passed on first run.
+
+Checkpoint Created: Yes — committed and pushed to `origin/main` using the session-supplied token
+(masked in all shown output), verified via the push command's actual
+`<old-sha>..<new-sha> main -> main` confirmation line. Token stripped from the local remote URL
+immediately after push.
+
+Ending Status: COMPLETED (TASK-014).
+
+Exact Next Action: See `.claude/handoff.md`.

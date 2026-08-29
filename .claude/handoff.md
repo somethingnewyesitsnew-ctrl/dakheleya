@@ -10,9 +10,13 @@ the full ledger entry. Currently IN_PROGRESS as a living system (each extension 
 no application-feature request is active.
 
 ## Session Status
-Complete — TASK-011 implemented (seeder now spreads dates across a configurable period and can
-populate Partnership/Setup/Treasury via `fullSystemActivity`, plus a page-wide "demo data active"
-banner/badge), on top of TASK-001 through TASK-010.
+Complete — TASK-014 implemented and pushed (real-building-structure setup: `DataService.
+setupRealBuildingStructure()` + Settings button, deterministically creating the user's actual 2
+floor / 6 apartment / 26 room / 70 bed layout). NOTE: this file's older narrative below (from a
+prior session) only covers through TASK-011 while `git log` shows TASK-012/013 also completed
+before this session started — that gap was not caused by this session and was not backfilled here;
+see `.claude/current-task.md`'s "Note on state-file staleness" for detail. A future session should
+reconcile TASK-012/013 into this narrative properly.
 
 ## Active Task
 None — awaiting the next request from the user, or feedback from testing TASK-011.
@@ -157,14 +161,18 @@ session yet. The next step (or a future session) should ask for a token once bef
 `CLAUDE.md` → "Confirmed working method".
 
 ## Exact Next Action
-1. If a push is wanted: ask the user for a GitHub token (once for this chat session — reuse the one
-   already supplied earlier in this session if it's still fresh; note the first token this session
-   supplied failed with a 403, so a *working* token may need to be confirmed again), push the local
-   TASK-011 commit(s) to `origin/main`, mask the token in shown output, and remind the user to
-   revoke/rotate it afterward.
-2. Await the user's manual smoke-test feedback on TASK-011 (and any still-pending feedback on
-   earlier tasks).
-3. For any new request: run Session Recovery, do a Project Health check, log a new `REQ-xxx`/
+1. TASK-014 is already committed and pushed this session (see "Latest Git Information" below) —
+   no pending push.
+2. Await the user's manual browser smoke-test of TASK-014: open Settings → "الغرف والأسرة" and
+   click "إنشاء الهيكل الحقيقي للداخلية"; confirm the Dormitory hub and Dashboard occupancy tab
+   show 2 floors / 6 apartments / 26 rooms / 70 beds, and that check-in works normally against the
+   new real beds.
+3. Recommended (not yet done): reconcile TASK-012/TASK-013 into `current-task.md`'s narrative and
+   this file (they exist in `git log` but aren't summarized in the older prose sections below).
+4. Optional follow-up flagged in TASK-014: if the user wants the real structure protected from
+   "إعادة تهيئة الداخلية من الصفر" (which currently wipes it exactly like demo data), add a
+   structural tag distinguishing real vs. seeded floors/apartments/rooms.
+5. For any new request: run Session Recovery, do a Project Health check, log a new `REQ-xxx`/
    `TASK-xxx` as appropriate, implement, validate with an actual runtime check (not just
    `node --check`) when the change involves non-trivial logic, update state files, add a
    `SESSION-xxx` entry, commit and push once a token is available.
