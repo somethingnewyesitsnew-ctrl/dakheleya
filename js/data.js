@@ -1941,8 +1941,10 @@ const DataService = {
 
 /* ==========================================================================
    بيانات تجريبية أولية (Seed Data)
-   النظام يبدأ فارغاً تماماً: لا طوابق، لا شقق، لا غرف، لا أسرة، لا طالبات —
-   المستخدم هو من يبني هيكل الداخلية بنفسه من صفحة "هيكل الداخلية".
+   النظام يبدأ بالهيكل الفعلي الحقيقي للداخلية جاهزاً (طابقان متطابقان، 6 شقق،
+   26 غرفة، 70 سريراً — عبر DataService.setupRealBuildingStructure())، بدون أي
+   طالبات أو مصروفات أو معاملات وهمية. المستخدم بعدها يسكّن طالبات حقيقيات على
+   هذا الهيكل مباشرة من صفحة "الداخلية".
    ========================================================================== */
 function seedDemoData(force = false) {
     const already = StorageService.get(STORAGE_KEYS.meta);
@@ -1970,7 +1972,7 @@ function seedDemoData(force = false) {
         { id: 'p_fadil', name: 'الفاضل', ownership: 50, role: 'شريك مؤسس' }
     ]);
 
-    /* ---------- هيكل الداخلية: يبدأ فارغاً تماماً ---------- */
+    /* ---------- هيكل الداخلية: يبدأ فارغاً هنا مؤقتاً ليُعاد بناؤه بالهيكل الحقيقي أدناه ---------- */
     StorageService.set(STORAGE_KEYS.floors, []);
     StorageService.set(STORAGE_KEYS.apartments, []);
     StorageService.set(STORAGE_KEYS.bathrooms, []);
@@ -1989,7 +1991,12 @@ function seedDemoData(force = false) {
     StorageService.set(STORAGE_KEYS.activities, []);
     StorageService.set(STORAGE_KEYS.closings, []);
 
-    StorageService.set(STORAGE_KEYS.meta, { seeded: true, seedDate: new Date().toISOString(), version: 4 });
+    StorageService.set(STORAGE_KEYS.meta, { seeded: true, seedDate: new Date().toISOString(), version: 5 });
+
+    /* ---------- بناء الهيكل الفعلي الحقيقي للداخلية تلقائياً (طابقان/6 شقق/26 غرفة/70 سرير) ---------- */
+    // الداخلية فارغة للتو (تم تصفيرها أعلاه)، فـ setupRealBuildingStructure() لن ترفض العمل.
+    // لا يُنشئ أي طالبات أو مصروفات — فقط الهيكل الفيزيائي، جاهزاً لتسكين طالبات حقيقيات عليه.
+    DataService.setupRealBuildingStructure();
 }
 
 // تشغيل البذر عند أول تحميل
