@@ -31,7 +31,7 @@ Pages.assets = function (container) {
         <div class="app-card-body">
             <div class="table-responsive">
                 <table class="table table-app mb-0">
-                    <thead><tr><th>الاسم</th><th>الفئة</th><th>الكمية</th><th>تكلفة الشراء</th><th>تاريخ الشراء</th><th>دفع بواسطة</th><th>الحالة</th><th>الموقع</th></tr></thead>
+                    <thead><tr><th>الاسم</th><th>الفئة</th><th>الكمية</th><th>تكلفة الشراء</th><th>تاريخ الشراء</th><th>دفع بواسطة</th><th>الحالة</th><th>الموقع</th><th></th></tr></thead>
                     <tbody id="assets-tbody"></tbody>
                 </table>
             </div>
@@ -40,46 +40,62 @@ Pages.assets = function (container) {
 
     function render() {
         const q = document.getElementById('asset-search').value.trim().toLowerCase();
-        let list = assets;
+        const current = DataService.getAssets();
+        let list = current;
         if (q) list = list.filter(a => a.name.toLowerCase().includes(q) || a.category.toLowerCase().includes(q));
         document.getElementById('assets-tbody').innerHTML = list.map(a => `<tr>
             <td class="fw-bold">${a.name}</td><td>${a.category}</td><td>${Utils.formatNumber(a.quantity)}</td>
             <td class="money">${Utils.formatMoney(a.purchaseCost)}</td><td>${a.purchaseDate}</td>
             <td>${a.paidBy}</td><td><span class="badge-soft bg-soft-success">${a.condition}</span></td><td>${a.location}</td>
-        </tr>`).join('') || `<tr><td colspan="8">${emptyState('bi-box','لا توجد أصول مطابقة')}</td></tr>`;
+            <td class="text-nowrap">
+                <button class="btn btn-sm btn-light border edit-asset-btn" data-id="${a.id}" title="تعديل"><i class="bi bi-pencil-square text-teal"></i></button>
+                <button class="btn btn-sm btn-light border delete-asset-btn" data-id="${a.id}" title="حذف"><i class="bi bi-trash text-danger"></i></button>
+            </td>
+        </tr>`).join('') || `<tr><td colspan="9">${emptyState('bi-box','لا توجد أصول مطابقة')}</td></tr>`;
+
+        document.querySelectorAll('.edit-asset-btn').forEach(btn => btn.addEventListener('click', () => openAddAssetModal(btn.dataset.id)));
+        document.querySelectorAll('.delete-asset-btn').forEach(btn => btn.addEventListener('click', () => {
+            confirmAction('سيتم حذف هذا الأصل نهائياً من السجل. هل تريد المتابعة؟', () => {
+                DataService.deleteAsset(btn.dataset.id);
+                showToast('تم حذف الأصل', 'warning');
+                router();
+            });
+        }));
     }
     document.getElementById('asset-search').addEventListener('input', render);
     render();
 
-    document.getElementById('add-asset-btn').addEventListener('click', openAddAssetModal);
+    document.getElementById('add-asset-btn').addEventListener('click', () => openAddAssetModal());
 };
 
-function openAddAssetModal() {
+function openAddAssetModal(editId = null) {
     const id = 'addAssetModal';
     document.getElementById(id)?.remove();
+    const existing = editId ? DataService.getAssets().find(a => a.id === editId) : null;
+    const v = existing || {};
     const html = `
     <div class="modal fade" id="${id}" tabindex="-1">
       <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
-          <div class="modal-header"><h5 class="modal-title fw-bold"><i class="bi bi-box-seam me-2 text-teal"></i>أصل جديد</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+          <div class="modal-header"><h5 class="modal-title fw-bold"><i class="bi ${editId ? 'bi-pencil-square' : 'bi-box-seam'} me-2 text-teal"></i>${editId ? 'تعديل الأصل' : 'أصل جديد'}</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
           <div class="modal-body">
             <form id="asset-form">
                 <div class="row g-3">
-                    <div class="col-md-6"><label class="form-label fw-bold">اسم الأصل</label><input class="form-control" name="name" required></div>
-                    <div class="col-md-6"><label class="form-label fw-bold">الفئة</label><select class="form-select" name="category">${ASSET_CATEGORIES.map(c=>`<option>${c}</option>`).join('')}</select></div>
-                    <div class="col-md-6"><label class="form-label fw-bold">الكمية</label><input type="number" class="form-control" name="quantity" min="1" value="1" required></div>
-                    <div class="col-md-6"><label class="form-label fw-bold">تكلفة الشراء الإجمالية</label><input type="number" class="form-control" name="purchaseCost" min="0" required></div>
-                    <div class="col-md-6"><label class="form-label fw-bold">تاريخ الشراء</label><input type="date" class="form-control" name="purchaseDate" value="${Utils.todayISO()}"></div>
-                    <div class="col-md-6"><label class="form-label fw-bold">دفع بواسطة</label><select class="form-select" name="paidBy">${DataService.getPartners().map(p=>`<option>${p.name}</option>`).join('')}</select></div>
-                    <div class="col-md-6"><label class="form-label fw-bold">الحالة</label><select class="form-select" name="condition"><option>جيدة</option><option>ممتازة</option><option>تحتاج صيانة</option></select></div>
-                    <div class="col-md-6"><label class="form-label fw-bold">الموقع</label><input class="form-control" name="location"></div>
-                    <div class="col-12"><label class="form-label fw-bold">رقم الإيصال (اختياري)</label><input class="form-control" name="receipt"></div>
+                    <div class="col-md-6"><label class="form-label fw-bold">اسم الأصل</label><input class="form-control" name="name" value="${v.name||''}" required></div>
+                    <div class="col-md-6"><label class="form-label fw-bold">الفئة</label><select class="form-select" name="category">${ASSET_CATEGORIES.map(c=>`<option ${v.category===c?'selected':''}>${c}</option>`).join('')}</select></div>
+                    <div class="col-md-6"><label class="form-label fw-bold">الكمية</label><input type="number" class="form-control" name="quantity" min="1" value="${v.quantity||1}" required></div>
+                    <div class="col-md-6"><label class="form-label fw-bold">تكلفة الشراء الإجمالية</label><input type="number" class="form-control" name="purchaseCost" min="0" value="${v.purchaseCost||''}" required></div>
+                    <div class="col-md-6"><label class="form-label fw-bold">تاريخ الشراء</label><input type="date" class="form-control" name="purchaseDate" value="${v.purchaseDate || Utils.todayISO()}"></div>
+                    <div class="col-md-6"><label class="form-label fw-bold">دفع بواسطة</label><select class="form-select" name="paidBy">${DataService.getPartners().map(p=>`<option ${v.paidBy===p.name?'selected':''}>${p.name}</option>`).join('')}</select></div>
+                    <div class="col-md-6"><label class="form-label fw-bold">الحالة</label><select class="form-select" name="condition">${['جيدة','ممتازة','تحتاج صيانة'].map(c=>`<option ${v.condition===c?'selected':''}>${c}</option>`).join('')}</select></div>
+                    <div class="col-md-6"><label class="form-label fw-bold">الموقع</label><input class="form-control" name="location" value="${v.location||''}"></div>
+                    <div class="col-12"><label class="form-label fw-bold">رقم الإيصال (اختياري)</label><input class="form-control" name="receipt" value="${v.receipt||''}"></div>
                 </div>
             </form>
           </div>
           <div class="modal-footer">
             <button class="btn btn-light border" data-bs-dismiss="modal">إلغاء</button>
-            <button class="btn btn-brand" id="save-asset-btn">حفظ</button>
+            <button class="btn btn-brand" id="save-asset-btn">${editId ? 'حفظ التعديلات' : 'حفظ'}</button>
           </div>
         </div>
       </div>
@@ -91,9 +107,14 @@ function openAddAssetModal() {
         const form = document.getElementById('asset-form');
         if (!form.reportValidity()) return;
         const fd = Object.fromEntries(new FormData(form).entries());
-        DataService.addAsset(fd);
+        if (editId) {
+            DataService.updateAsset(editId, fd);
+            showToast('تم حفظ تعديل الأصل', 'success');
+        } else {
+            DataService.addAsset(fd);
+            showToast('تم إضافة الأصل بنجاح', 'success');
+        }
         modal.hide();
-        showToast('تم إضافة الأصل بنجاح', 'success');
         router();
     });
     el.addEventListener('hidden.bs.modal', () => el.remove());

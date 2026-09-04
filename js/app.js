@@ -11,8 +11,11 @@ const ROUTES = [
     { hash: '#/dormitory', title: 'الداخلية', eyebrow: 'الغرف والطالبات', icon: 'bi-building', page: 'dormitory' },
     { hash: '#/finance', title: 'المالية', eyebrow: 'الإيرادات والمصروفات', icon: 'bi-cash-coin', page: 'finance' },
     { hash: '#/setup', title: 'التأسيس والتجهيز', eyebrow: 'الميزانية والأصول', icon: 'bi-bar-chart-steps', page: 'setup' },
-    { hash: '#/review', title: 'المراجعة', eyebrow: 'الإغلاق والسجلات', icon: 'bi-clipboard-check', page: 'review' },
-    { hash: '#/tools', title: 'الأدوات', eyebrow: 'محاكاة وعقود', icon: 'bi-tools', page: 'tools' },
+    // ملاحظة: تم إخفاء "المراجعة" و"الأدوات" من الشريط الجانبي بناءً على طلب المستخدم.
+    // الكود الخاص بهما (js/hubs.js، js/tools.js) لم يُحذف ولا يزال موجوداً بالكامل في الريبو
+    // لإعادة تفعيلهما لاحقاً لو احتجنا — فقط أعد هذين السطرين:
+    // { hash: '#/review', title: 'المراجعة', eyebrow: 'الإغلاق والسجلات', icon: 'bi-clipboard-check', page: 'review' },
+    // { hash: '#/tools', title: 'الأدوات', eyebrow: 'محاكاة وعقود', icon: 'bi-tools', page: 'tools' },
     { hash: '#/reports', title: 'التقارير', eyebrow: 'تحليلات', icon: 'bi-file-earmark-bar-graph', page: 'reports' },
     { hash: '#/settings', title: 'الإعدادات', eyebrow: 'ضبط النظام', icon: 'bi-gear', page: 'settings' }
 ];
@@ -428,7 +431,7 @@ const TX_TYPE_EXPLANATIONS = {
     'تسوية': 'تصحيح أو توفيق حساب بين طرفين — ليست دخلاً ولا مصروفاً حقيقياً'
 };
 
-function openAddTransactionModal(defaults = {}) {
+function openAddTransactionModal(defaults = {}, editId = null) {
     const partners = DataService.getPartners();
     const modalRoot = document.getElementById('modal-root');
     const id = 'addTransactionModal';
@@ -451,7 +454,7 @@ function openAddTransactionModal(defaults = {}) {
       <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2 text-teal"></i>معاملة جديدة</h5>
+            <h5 class="modal-title fw-bold"><i class="bi ${editId ? 'bi-pencil-square' : 'bi-plus-circle'} me-2 text-teal"></i>${editId ? 'تعديل المعاملة' : 'معاملة جديدة'}</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
@@ -498,18 +501,18 @@ function openAddTransactionModal(defaults = {}) {
                 </div>
                 <div class="col-md-6">
                     <label class="form-label fw-bold">مرفق (اسم الملف اختياري)</label>
-                    <input type="text" class="form-control" name="attachment" placeholder="مثال: ايصال.pdf">
+                    <input type="text" class="form-control" name="attachment" placeholder="مثال: ايصال.pdf" value="${defaults.attachment||''}">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label fw-bold">ملاحظات</label>
-                    <input type="text" class="form-control" name="notes" placeholder="ملاحظات إضافية">
+                    <input type="text" class="form-control" name="notes" placeholder="ملاحظات إضافية" value="${defaults.notes||''}">
                 </div>
               </div>
             </form>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-light border" data-bs-dismiss="modal">إلغاء</button>
-            <button type="button" class="btn btn-brand" id="tx-save-btn"><i class="bi bi-check-lg me-1"></i>حفظ المعاملة</button>
+            <button type="button" class="btn btn-brand" id="tx-save-btn"><i class="bi bi-check-lg me-1"></i>${editId ? 'حفظ التعديلات' : 'حفظ المعاملة'}</button>
           </div>
         </div>
       </div>
@@ -535,9 +538,14 @@ function openAddTransactionModal(defaults = {}) {
         const fd = new FormData(form);
         const tx = Object.fromEntries(fd.entries());
         if (blockIfMonthClosed(tx.date)) return;
-        DataService.addTransaction(tx);
+        if (editId) {
+            DataService.updateTransaction(editId, tx);
+            showToast('تم حفظ تعديل المعاملة', 'success');
+        } else {
+            DataService.addTransaction(tx);
+            showToast('تم حفظ المعاملة بنجاح', 'success');
+        }
         modal.hide();
-        showToast('تم حفظ المعاملة بنجاح', 'success');
         router(); // إعادة رسم الصفحة الحالية لتحديث الأرقام
     });
 

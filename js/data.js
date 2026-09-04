@@ -230,6 +230,19 @@ const DataService = {
         });
         return record;
     },
+    updateTransaction(id, patch) {
+        const clean = {
+            date: patch.date, description: patch.description, type: patch.type,
+            category: patch.category || '', amount: Number(patch.amount) || 0,
+            partner: patch.partner || '', paymentSource: patch.paymentSource || 'الخزينة',
+            attachment: patch.attachment || '', notes: patch.notes || ''
+        };
+        const updated = StorageService.update(STORAGE_KEYS.transactions, id, clean);
+        if (updated) {
+            this.addActivity({ user: Utils.currentUserName(), action: 'عدّل معاملة', entity: updated.description, amount: updated.amount });
+        }
+        return updated;
+    },
     cancelTransaction(id, user) {
         const list = StorageService.get(STORAGE_KEYS.transactions) || [];
         const original = list.find(t => t.id === id);
@@ -981,6 +994,19 @@ const DataService = {
         StorageService.add(STORAGE_KEYS.assets, record);
         this.addActivity({ user: Utils.currentUserName(), action: 'أضاف أصلاً', entity: record.name, amount: record.purchaseCost });
         return record;
+    },
+    updateAsset(id, patch) {
+        const updated = StorageService.update(STORAGE_KEYS.assets, id, patch);
+        if (updated) {
+            this.addActivity({ user: Utils.currentUserName(), action: 'عدّل أصلاً', entity: updated.name, amount: updated.purchaseCost });
+        }
+        return updated;
+    },
+    deleteAsset(id) {
+        const asset = this.getAssets().find(a => a.id === id);
+        StorageService.remove(STORAGE_KEYS.assets, id);
+        if (asset) this.addActivity({ user: Utils.currentUserName(), action: 'حذف أصلاً', entity: asset.name, amount: asset.purchaseCost });
+        return asset;
     },
 
     /* ---------------------- سجل النشاط ---------------------- */

@@ -111,11 +111,20 @@ function renderTransactionsPage(container, { title, icon, typeFilter, emptyIcon,
                 <td>${statusBadge(t.status)}</td>
                 <td class="text-muted" style="font-size:12px;">${t.createdBy}</td>
                 <td class="text-nowrap">
+                    ${t.status !== 'ملغاة' ? `<button class="btn btn-sm btn-light border edit-tx-btn" data-id="${t.id}" title="تعديل"><i class="bi bi-pencil-square text-teal"></i></button>` : ''}
                     ${t.status !== 'ملغاة' ? `<button class="btn btn-sm btn-light border cancel-tx-btn" data-id="${t.id}" data-date="${t.date}" title="إلغاء المعاملة"><i class="bi bi-x-circle text-danger"></i></button>` : ''}
                 </td>
             </tr>
         `).join('');
 
+        tbody.querySelectorAll('.edit-tx-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tx = DataService.getTransactions().find(x => x.id === btn.dataset.id);
+                if (!tx) return;
+                if (blockIfMonthClosed(tx.date)) return;
+                openAddTransactionModal(tx, tx.id);
+            });
+        });
         tbody.querySelectorAll('.cancel-tx-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 if (blockIfMonthClosed(btn.dataset.date)) return;

@@ -65,11 +65,17 @@ Pages.expenses = function (container) {
                 <td>${statusBadge(e.status)}</td>
                 <td class="text-nowrap">
                     ${e.needsAllocation ? `<button class="btn btn-sm btn-brand allocate-btn" data-id="${e.id}">تحديد التوزيع</button>` : ''}
+                    ${e.status !== 'ملغى' ? `<button class="btn btn-sm btn-light border edit-exp-btn" data-id="${e.id}" title="تعديل"><i class="bi bi-pencil-square text-teal"></i></button>` : ''}
                     ${e.status !== 'ملغى' ? `<button class="btn btn-sm btn-light border cancel-exp-btn" data-id="${e.id}" data-date="${e.date}" title="إلغاء"><i class="bi bi-x-circle text-danger"></i></button>` : ''}
                 </td>
             </tr>`).join('') || `<tr><td colspan="9">${emptyState('bi-receipt','لا توجد مصروفات مطابقة')}</td></tr>`;
 
         document.querySelectorAll('.allocate-btn').forEach(btn => btn.addEventListener('click', () => openAllocateModal(btn.dataset.id, render)));
+        document.querySelectorAll('.edit-exp-btn').forEach(btn => btn.addEventListener('click', () => {
+            const exp = DataService.getExpenses().find(x => x.id === btn.dataset.id);
+            if (exp && blockIfMonthClosed(exp.date)) return;
+            openAddExpenseModal(render, btn.dataset.id);
+        }));
         document.querySelectorAll('.cancel-exp-btn').forEach(btn => btn.addEventListener('click', () => {
             if (blockIfMonthClosed(btn.dataset.date)) return;
             confirmAction('لن يتم حذف المصروف نهائياً، سيتم فقط تعليمه كملغى مع الاحتفاظ بالسجل. هل تريد المتابعة؟', () => {
@@ -85,43 +91,45 @@ Pages.expenses = function (container) {
     render();
 };
 
-function openAddExpenseModal(onSaved) {
+function openAddExpenseModal(onSaved, editId = null) {
     const id = 'addExpenseModal';
     document.getElementById(id)?.remove();
+    const existing = editId ? DataService.getExpenses().find(e => e.id === editId) : null;
+    const v = existing || {};
     const html = `
     <div class="modal fade" id="${id}" tabindex="-1">
       <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title fw-bold"><i class="bi bi-receipt me-2 text-teal"></i>مصروف جديد</h5>
+            <h5 class="modal-title fw-bold"><i class="bi ${editId ? 'bi-pencil-square' : 'bi-receipt'} me-2 text-teal"></i>${editId ? 'تعديل المصروف' : 'مصروف جديد'}</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
             <form id="expense-form">
                 <div class="row g-3">
-                    <div class="col-md-6"><label class="form-label fw-bold">التاريخ</label><input type="date" class="form-control" name="date" value="${Utils.todayISO()}" required></div>
+                    <div class="col-md-6"><label class="form-label fw-bold">التاريخ</label><input type="date" class="form-control" name="date" value="${v.date || Utils.todayISO()}" required></div>
                     <div class="col-md-6"><label class="form-label fw-bold">الفئة</label>
-                        <select class="form-select" name="category">${EXPENSE_CATEGORIES.map(c=>`<option>${c}</option>`).join('')}</select>
+                        <select class="form-select" name="category">${EXPENSE_CATEGORIES.map(c=>`<option ${v.category===c?'selected':''}>${c}</option>`).join('')}</select>
                     </div>
-                    <div class="col-md-6"><label class="form-label fw-bold">المبلغ الكلي (ج.س)</label><input type="number" class="form-control" name="amount" min="0" required></div>
+                    <div class="col-md-6"><label class="form-label fw-bold">المبلغ الكلي (ج.س)</label><input type="number" class="form-control" name="amount" min="0" value="${v.amount||''}" required></div>
                     <div class="col-md-6"><label class="form-label fw-bold">دفع بواسطة</label>
-                        <select class="form-select" name="paidBy">${DataService.getPartners().map(p=>`<option>${p.name}</option>`).join('')}</select>
+                        <select class="form-select" name="paidBy">${DataService.getPartners().map(p=>`<option ${v.paidBy===p.name?'selected':''}>${p.name}</option>`).join('')}</select>
                     </div>
-                    <div class="col-12"><label class="form-label fw-bold">البيان</label><input type="text" class="form-control" name="description" required></div>
+                    <div class="col-12"><label class="form-label fw-bold">البيان</label><input type="text" class="form-control" name="description" value="${v.description||''}" required></div>
                     <div class="col-md-6">
                         <label class="form-label fw-bold">نوع المصروف</label>
                         <select class="form-select" name="nature" id="exp-nature-select">
-                            <option value="تجاري">تجاري (يدخل في مصروفات الداخلية)</option>
-                            <option value="شخصي">شخصي (لا يؤثر على أرباح الداخلية)</option>
+                            <option value="تجاري" ${v.nature==='تجاري'?'selected':''}>تجاري (يدخل في مصروفات الداخلية)</option>
+                            <option value="شخصي" ${v.nature==='شخصي'?'selected':''}>شخصي (لا يؤثر على أرباح الداخلية)</option>
                         </select>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-bold">طريقة الدفع</label>
-                        <select class="form-select" name="paymentSource"><option>نقدي</option><option>تحويل بنكي</option><option>الخزينة</option></select>
+                        <select class="form-select" name="paymentSource">${['نقدي','تحويل بنكي','الخزينة'].map(p=>`<option ${v.paymentSource===p?'selected':''}>${p}</option>`).join('')}</select>
                     </div>
                     <div class="col-12">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="needs-allocation-check" name="needsAllocation">
+                            <input class="form-check-input" type="checkbox" id="needs-allocation-check" name="needsAllocation" ${v.needsAllocation?'checked':''}>
                             <label class="form-check-label" for="needs-allocation-check">هذا المصروف مشترك ويحتاج تحديد المبلغ المحمَّل على الداخلية لاحقاً</label>
                         </div>
                     </div>
@@ -130,7 +138,7 @@ function openAddExpenseModal(onSaved) {
           </div>
           <div class="modal-footer">
             <button class="btn btn-light border" data-bs-dismiss="modal">إلغاء</button>
-            <button class="btn btn-brand" id="save-expense-btn">حفظ المصروف</button>
+            <button class="btn btn-brand" id="save-expense-btn">${editId ? 'حفظ التعديلات' : 'حفظ المصروف'}</button>
           </div>
         </div>
       </div>
@@ -147,9 +155,14 @@ function openAddExpenseModal(onSaved) {
         exp.needsAllocation = !!document.getElementById('needs-allocation-check').checked;
         if (exp.needsAllocation) exp.chargedAmount = 0;
         if (exp.nature === 'شخصي') exp.chargedAmount = 0;
-        DataService.addExpense(exp);
+        if (editId) {
+            DataService.updateExpense(editId, exp);
+            showToast('تم حفظ تعديل المصروف', 'success');
+        } else {
+            DataService.addExpense(exp);
+            showToast('تم حفظ المصروف بنجاح', 'success');
+        }
         modal.hide();
-        showToast('تم حفظ المصروف بنجاح', 'success');
         if (onSaved) onSaved(); else router();
     });
     el.addEventListener('hidden.bs.modal', () => el.remove());
